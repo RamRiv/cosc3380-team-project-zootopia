@@ -1,0 +1,481 @@
+CREATE DATABASE  IF NOT EXISTS `final_zoo_db` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
+USE `final_zoo_db`;
+-- MySQL dump 10.13  Distrib 8.0.46, for Win64 (x86_64)
+--
+-- Host: 127.0.0.1    Database: final_zoo_db
+-- ------------------------------------------------------
+-- Server version	8.0.46
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!50503 SET NAMES utf8 */;
+/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
+/*!40103 SET TIME_ZONE='+00:00' */;
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+--
+-- Table structure for table `animal`
+--
+
+DROP TABLE IF EXISTS `animal`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `animal` (
+  `AnimalID` int NOT NULL AUTO_INCREMENT,
+  `Name` varchar(100) NOT NULL,
+  `SpeciesID` int NOT NULL,
+  `EnclosureID` int NOT NULL,
+  `Sex` varchar(10) NOT NULL,
+  `DateOfBirth` date DEFAULT NULL,
+  `AcquisitionDate` date NOT NULL,
+  PRIMARY KEY (`AnimalID`),
+  KEY `SpeciesID` (`SpeciesID`),
+  KEY `EnclosureID` (`EnclosureID`),
+  CONSTRAINT `animal_ibfk_1` FOREIGN KEY (`SpeciesID`) REFERENCES `species` (`SpeciesID`),
+  CONSTRAINT `animal_ibfk_2` FOREIGN KEY (`EnclosureID`) REFERENCES `enclosure` (`EnclosureID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `animal`
+--
+
+LOCK TABLES `animal` WRITE;
+/*!40000 ALTER TABLE `animal` DISABLE KEYS */;
+/*!40000 ALTER TABLE `animal` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `attraction`
+--
+
+DROP TABLE IF EXISTS `attraction`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `attraction` (
+  `AttractionID` int NOT NULL AUTO_INCREMENT,
+  `Name` varchar(100) NOT NULL,
+  `Type` varchar(50) NOT NULL,
+  `Schedule` datetime NOT NULL,
+  `Location` varchar(100) NOT NULL,
+  `Capacity` int NOT NULL,
+  `IsIndoor` tinyint(1) NOT NULL,
+  `Status` varchar(50) NOT NULL,
+  PRIMARY KEY (`AttractionID`),
+  CONSTRAINT `attraction_chk_1` CHECK ((`Capacity` > 0))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `attraction`
+--
+
+LOCK TABLES `attraction` WRITE;
+/*!40000 ALTER TABLE `attraction` DISABLE KEYS */;
+/*!40000 ALTER TABLE `attraction` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `customer`
+--
+
+DROP TABLE IF EXISTS `customer`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `customer` (
+  `CustomerID` int NOT NULL AUTO_INCREMENT,
+  `FirstName` varchar(50) NOT NULL,
+  `LastName` varchar(50) NOT NULL,
+  `EmailAddress` varchar(100) NOT NULL,
+  `PhoneNumber` varchar(25) NOT NULL,
+  `MembershipType` varchar(50) DEFAULT NULL,
+  PRIMARY KEY (`CustomerID`),
+  UNIQUE KEY `EmailAddress` (`EmailAddress`),
+  UNIQUE KEY `PhoneNumber` (`PhoneNumber`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `customer`
+--
+
+LOCK TABLES `customer` WRITE;
+/*!40000 ALTER TABLE `customer` DISABLE KEYS */;
+/*!40000 ALTER TABLE `customer` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `employee`
+--
+
+DROP TABLE IF EXISTS `employee`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `employee` (
+  `EmployeeID` int NOT NULL AUTO_INCREMENT,
+  `FirstName` varchar(50) NOT NULL,
+  `LastName` varchar(50) NOT NULL,
+  `Age` int NOT NULL,
+  `Gender` varchar(20) NOT NULL,
+  `JobRole` varchar(50) NOT NULL,
+  `HireDate` date NOT NULL,
+  `PhoneNumber` varchar(25) NOT NULL,
+  `EmailAddress` varchar(100) NOT NULL,
+  `Salary` decimal(10,2) NOT NULL,
+  `SupervisorID` int DEFAULT NULL,
+  `EnclosureID` int DEFAULT NULL,
+  `Username` varchar(50) DEFAULT NULL,
+  `PasswordHash` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`EmployeeID`),
+  UNIQUE KEY `PhoneNumber` (`PhoneNumber`),
+  UNIQUE KEY `EmailAddress` (`EmailAddress`),
+  UNIQUE KEY `Username` (`Username`),
+  KEY `SupervisorID` (`SupervisorID`),
+  KEY `EnclosureID` (`EnclosureID`),
+  CONSTRAINT `employee_ibfk_1` FOREIGN KEY (`SupervisorID`) REFERENCES `employee` (`EmployeeID`),
+  CONSTRAINT `employee_ibfk_2` FOREIGN KEY (`EnclosureID`) REFERENCES `enclosure` (`EnclosureID`),
+  CONSTRAINT `employee_chk_1` CHECK ((`Salary` > 0))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `employee`
+--
+
+LOCK TABLES `employee` WRITE;
+/*!40000 ALTER TABLE `employee` DISABLE KEYS */;
+/*!40000 ALTER TABLE `employee` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `enclosure`
+--
+
+DROP TABLE IF EXISTS `enclosure`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `enclosure` (
+  `EnclosureID` int NOT NULL AUTO_INCREMENT,
+  `Name` varchar(100) NOT NULL,
+  `HabitatType` varchar(50) NOT NULL,
+  `Capacity` int NOT NULL,
+  `Location` varchar(100) NOT NULL,
+  `IsIndoor` tinyint(1) NOT NULL,
+  `Status` varchar(50) NOT NULL,
+  PRIMARY KEY (`EnclosureID`),
+  CONSTRAINT `enclosure_chk_1` CHECK ((`Capacity` > 0))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `enclosure`
+--
+
+LOCK TABLES `enclosure` WRITE;
+/*!40000 ALTER TABLE `enclosure` DISABLE KEYS */;
+/*!40000 ALTER TABLE `enclosure` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `foodstand`
+--
+
+DROP TABLE IF EXISTS `foodstand`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `foodstand` (
+  `StandID` int NOT NULL AUTO_INCREMENT,
+  `Name` varchar(100) NOT NULL,
+  `Location` varchar(100) NOT NULL,
+  PRIMARY KEY (`StandID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `foodstand`
+--
+
+LOCK TABLES `foodstand` WRITE;
+/*!40000 ALTER TABLE `foodstand` DISABLE KEYS */;
+/*!40000 ALTER TABLE `foodstand` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `giftshop`
+--
+
+DROP TABLE IF EXISTS `giftshop`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `giftshop` (
+  `ShopID` int NOT NULL AUTO_INCREMENT,
+  `Name` varchar(100) NOT NULL,
+  `Location` varchar(100) NOT NULL,
+  PRIMARY KEY (`ShopID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `giftshop`
+--
+
+LOCK TABLES `giftshop` WRITE;
+/*!40000 ALTER TABLE `giftshop` DISABLE KEYS */;
+/*!40000 ALTER TABLE `giftshop` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `parking`
+--
+
+DROP TABLE IF EXISTS `parking`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `parking` (
+  `PassID` int NOT NULL AUTO_INCREMENT,
+  `Type` varchar(50) NOT NULL,
+  `Price` decimal(8,2) NOT NULL,
+  `Date` date NOT NULL,
+  PRIMARY KEY (`PassID`),
+  CONSTRAINT `parking_chk_1` CHECK ((`Price` >= 0))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `parking`
+--
+
+LOCK TABLES `parking` WRITE;
+/*!40000 ALTER TABLE `parking` DISABLE KEYS */;
+/*!40000 ALTER TABLE `parking` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `product`
+--
+
+DROP TABLE IF EXISTS `product`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `product` (
+  `ProductID` int NOT NULL AUTO_INCREMENT,
+  `Name` varchar(100) NOT NULL,
+  `Price` decimal(8,2) NOT NULL,
+  `Category` varchar(50) NOT NULL,
+  `QuantityInStock` int NOT NULL,
+  `ShopID` int DEFAULT NULL,
+  `StandID` int DEFAULT NULL,
+  PRIMARY KEY (`ProductID`),
+  KEY `ShopID` (`ShopID`),
+  KEY `StandID` (`StandID`),
+  CONSTRAINT `product_ibfk_1` FOREIGN KEY (`ShopID`) REFERENCES `giftshop` (`ShopID`),
+  CONSTRAINT `product_ibfk_2` FOREIGN KEY (`StandID`) REFERENCES `foodstand` (`StandID`),
+  CONSTRAINT `product_chk_1` CHECK ((`Price` >= 0)),
+  CONSTRAINT `product_chk_2` CHECK ((`QuantityInStock` >= 0))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `product`
+--
+
+LOCK TABLES `product` WRITE;
+/*!40000 ALTER TABLE `product` DISABLE KEYS */;
+/*!40000 ALTER TABLE `product` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `species`
+--
+
+DROP TABLE IF EXISTS `species`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `species` (
+  `SpeciesID` int NOT NULL AUTO_INCREMENT,
+  `CommonName` varchar(100) NOT NULL,
+  `ScientificName` varchar(100) NOT NULL,
+  `Diet` varchar(50) NOT NULL,
+  `ConservationStatus` varchar(50) NOT NULL,
+  `AvgLifespan` int DEFAULT NULL,
+  PRIMARY KEY (`SpeciesID`),
+  UNIQUE KEY `ScientificName` (`ScientificName`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `species`
+--
+
+LOCK TABLES `species` WRITE;
+/*!40000 ALTER TABLE `species` DISABLE KEYS */;
+/*!40000 ALTER TABLE `species` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `species_enclosure`
+--
+
+DROP TABLE IF EXISTS `species_enclosure`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `species_enclosure` (
+  `SpeciesID` int NOT NULL,
+  `EnclosureID` int NOT NULL,
+  PRIMARY KEY (`SpeciesID`,`EnclosureID`),
+  KEY `EnclosureID` (`EnclosureID`),
+  CONSTRAINT `species_enclosure_ibfk_1` FOREIGN KEY (`SpeciesID`) REFERENCES `species` (`SpeciesID`),
+  CONSTRAINT `species_enclosure_ibfk_2` FOREIGN KEY (`EnclosureID`) REFERENCES `enclosure` (`EnclosureID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `species_enclosure`
+--
+
+LOCK TABLES `species_enclosure` WRITE;
+/*!40000 ALTER TABLE `species_enclosure` DISABLE KEYS */;
+/*!40000 ALTER TABLE `species_enclosure` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `ticket`
+--
+
+DROP TABLE IF EXISTS `ticket`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `ticket` (
+  `TicketID` int NOT NULL AUTO_INCREMENT,
+  `Type` varchar(50) NOT NULL,
+  `Date` date NOT NULL,
+  `Price` decimal(8,2) NOT NULL,
+  PRIMARY KEY (`TicketID`),
+  CONSTRAINT `ticket_chk_1` CHECK ((`Price` >= 0))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `ticket`
+--
+
+LOCK TABLES `ticket` WRITE;
+/*!40000 ALTER TABLE `ticket` DISABLE KEYS */;
+/*!40000 ALTER TABLE `ticket` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `transaction`
+--
+
+DROP TABLE IF EXISTS `transaction`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `transaction` (
+  `TransactionID` int NOT NULL AUTO_INCREMENT,
+  `CustomerID` int NOT NULL,
+  `Date` datetime NOT NULL,
+  `TotalAmount` decimal(10,2) NOT NULL,
+  `PaymentType` varchar(50) NOT NULL,
+  PRIMARY KEY (`TransactionID`),
+  KEY `CustomerID` (`CustomerID`),
+  CONSTRAINT `transaction_ibfk_1` FOREIGN KEY (`CustomerID`) REFERENCES `customer` (`CustomerID`),
+  CONSTRAINT `transaction_chk_1` CHECK ((`TotalAmount` >= 0))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `transaction`
+--
+
+LOCK TABLES `transaction` WRITE;
+/*!40000 ALTER TABLE `transaction` DISABLE KEYS */;
+/*!40000 ALTER TABLE `transaction` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `transactionlineitem`
+--
+
+DROP TABLE IF EXISTS `transactionlineitem`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `transactionlineitem` (
+  `LineItemID` int NOT NULL AUTO_INCREMENT,
+  `TransactionID` int NOT NULL,
+  `Quantity` int NOT NULL,
+  `ItemType` varchar(50) NOT NULL,
+  `UnitPrice` decimal(8,2) NOT NULL,
+  `Subtotal` decimal(10,2) NOT NULL,
+  `TicketID` int DEFAULT NULL,
+  `ProductID` int DEFAULT NULL,
+  `PassID` int DEFAULT NULL,
+  PRIMARY KEY (`LineItemID`),
+  KEY `TransactionID` (`TransactionID`),
+  KEY `TicketID` (`TicketID`),
+  KEY `ProductID` (`ProductID`),
+  KEY `PassID` (`PassID`),
+  CONSTRAINT `transactionlineitem_ibfk_1` FOREIGN KEY (`TransactionID`) REFERENCES `transaction` (`TransactionID`),
+  CONSTRAINT `transactionlineitem_ibfk_2` FOREIGN KEY (`TicketID`) REFERENCES `ticket` (`TicketID`),
+  CONSTRAINT `transactionlineitem_ibfk_3` FOREIGN KEY (`ProductID`) REFERENCES `product` (`ProductID`),
+  CONSTRAINT `transactionlineitem_ibfk_4` FOREIGN KEY (`PassID`) REFERENCES `parking` (`PassID`),
+  CONSTRAINT `transactionlineitem_chk_1` CHECK ((`Quantity` > 0)),
+  CONSTRAINT `transactionlineitem_chk_2` CHECK ((`UnitPrice` >= 0)),
+  CONSTRAINT `transactionlineitem_chk_3` CHECK ((`Subtotal` >= 0))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `transactionlineitem`
+--
+
+LOCK TABLES `transactionlineitem` WRITE;
+/*!40000 ALTER TABLE `transactionlineitem` DISABLE KEYS */;
+/*!40000 ALTER TABLE `transactionlineitem` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `zooclosure`
+--
+
+DROP TABLE IF EXISTS `zooclosure`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `zooclosure` (
+  `ClosureID` int NOT NULL AUTO_INCREMENT,
+  `Date` date NOT NULL,
+  `Scope` varchar(50) NOT NULL,
+  `Reason` varchar(100) NOT NULL,
+  `EnclosureID` int DEFAULT NULL,
+  `AttractionID` int DEFAULT NULL,
+  PRIMARY KEY (`ClosureID`),
+  KEY `EnclosureID` (`EnclosureID`),
+  KEY `AttractionID` (`AttractionID`),
+  CONSTRAINT `zooclosure_ibfk_1` FOREIGN KEY (`EnclosureID`) REFERENCES `enclosure` (`EnclosureID`),
+  CONSTRAINT `zooclosure_ibfk_2` FOREIGN KEY (`AttractionID`) REFERENCES `attraction` (`AttractionID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `zooclosure`
+--
+
+LOCK TABLES `zooclosure` WRITE;
+/*!40000 ALTER TABLE `zooclosure` DISABLE KEYS */;
+/*!40000 ALTER TABLE `zooclosure` ENABLE KEYS */;
+UNLOCK TABLES;
+/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+
+-- Dump completed on 2026-10-20 17:14:09
