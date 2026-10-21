@@ -456,7 +456,9 @@ CREATE TABLE `zooclosure` (
   KEY `EnclosureID` (`EnclosureID`),
   KEY `AttractionID` (`AttractionID`),
   CONSTRAINT `zooclosure_ibfk_1` FOREIGN KEY (`EnclosureID`) REFERENCES `enclosure` (`EnclosureID`),
-  CONSTRAINT `zooclosure_ibfk_2` FOREIGN KEY (`AttractionID`) REFERENCES `attraction` (`AttractionID`)
+  CONSTRAINT `zooclosure_ibfk_2` FOREIGN KEY (`AttractionID`) REFERENCES `attraction` (`AttractionID`),
+  CONSTRAINT `zooclosure_chk_1` CHECK ((`Scope` IN ('Full Zoo','Enclosure','Attraction'))),
+  CONSTRAINT `zooclosure_chk_2` CHECK ((((`Scope` = 'Full Zoo') AND (`EnclosureID` IS NULL) AND (`AttractionID` IS NULL)) OR ((`Scope` = 'Enclosure') AND (`EnclosureID` IS NOT NULL) AND (`AttractionID` IS NULL)) OR ((`Scope` = 'Attraction') AND (`AttractionID` IS NOT NULL) AND (`EnclosureID` IS NULL))))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
