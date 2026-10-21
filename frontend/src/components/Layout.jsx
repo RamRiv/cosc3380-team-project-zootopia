@@ -1,13 +1,20 @@
-import { NavLink, Outlet, useNavigate } from 'react-router'
+import { NavLink, Outlet, useNavigate, Navigate } from 'react-router'
 
 // the frame every page sits in: top bar + sidebar
 // <Outlet /> is where the current page shows up
 function Layout() {
-  const navigate = useNavigate()
+ const navigate = useNavigate()
 
-  // just goes back to login for now
-  // later this will also clear who's logged in
+  // get who's logged in (turn the saved text back into an object)
+  const user = JSON.parse(localStorage.getItem('user'))
+
+  // nobody logged in -> send them to login
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+
   function handleLogout() {
+    localStorage.removeItem('user') // forget who was logged in
     navigate('/login')
   }
 
@@ -17,7 +24,7 @@ function Layout() {
         <span className="logo">Zoo Admin</span>
         <div className="user">
           {/* hardcoded for now, will come from login later */}
-          <span>Adair (Manager)</span>
+                    <span>{user.username} ({user.role})</span>
           <button onClick={handleLogout}>Logout</button>
         </div>
       </header>
