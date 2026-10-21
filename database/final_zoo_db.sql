@@ -275,7 +275,8 @@ CREATE TABLE `product` (
   CONSTRAINT `product_ibfk_1` FOREIGN KEY (`ShopID`) REFERENCES `giftshop` (`ShopID`),
   CONSTRAINT `product_ibfk_2` FOREIGN KEY (`StandID`) REFERENCES `foodstand` (`StandID`),
   CONSTRAINT `product_chk_1` CHECK ((`Price` >= 0)),
-  CONSTRAINT `product_chk_2` CHECK ((`QuantityInStock` >= 0))
+  CONSTRAINT `product_chk_2` CHECK ((`QuantityInStock` >= 0)),
+  CONSTRAINT `product_chk_3` CHECK ((((`ShopID` IS NOT NULL) AND (`StandID` IS NULL)) OR ((`ShopID` IS NULL) AND (`StandID` IS NOT NULL))))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -425,7 +426,9 @@ CREATE TABLE `transactionlineitem` (
   CONSTRAINT `transactionlineitem_ibfk_4` FOREIGN KEY (`PassID`) REFERENCES `parking` (`PassID`),
   CONSTRAINT `transactionlineitem_chk_1` CHECK ((`Quantity` > 0)),
   CONSTRAINT `transactionlineitem_chk_2` CHECK ((`UnitPrice` >= 0)),
-  CONSTRAINT `transactionlineitem_chk_3` CHECK ((`Subtotal` >= 0))
+  CONSTRAINT `transactionlineitem_chk_3` CHECK ((`Subtotal` >= 0)),
+  CONSTRAINT `transactionlineitem_chk_4` CHECK ((`ItemType` IN ('Ticket','Product','Parking'))),
+  CONSTRAINT `transactionlineitem_chk_5` CHECK ((((`ItemType` = 'Ticket') AND (`TicketID` IS NOT NULL) AND (`ProductID` IS NULL) AND (`PassID` IS NULL)) OR ((`ItemType` = 'Product') AND (`ProductID` IS NOT NULL) AND (`TicketID` IS NULL) AND (`PassID` IS NULL)) OR ((`ItemType` = 'Parking') AND (`PassID` IS NOT NULL) AND (`TicketID` IS NULL) AND (`ProductID` IS NULL))))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
