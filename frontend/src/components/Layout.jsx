@@ -1,8 +1,16 @@
-import { NavLink, Outlet } from 'react-router'
+import { NavLink, Outlet, useNavigate } from 'react-router'
 
 // the frame every page sits in: top bar + sidebar
 // <Outlet /> is where the current page shows up
 function Layout() {
+  const navigate = useNavigate()
+
+  // just goes back to login for now
+  // later this will also clear who's logged in
+  function handleLogout() {
+    navigate('/login')
+  }
+
   return (
     <div className="layout">
       <header className="topbar">
@@ -10,7 +18,7 @@ function Layout() {
         <div className="user">
           {/* hardcoded for now, will come from login later */}
           <span>Adair (Manager)</span>
-          <button>Logout</button>
+          <button onClick={handleLogout}>Logout</button>
         </div>
       </header>
 
