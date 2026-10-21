@@ -380,12 +380,10 @@ CREATE TABLE `transaction` (
   `TransactionID` int NOT NULL AUTO_INCREMENT,
   `CustomerID` int NOT NULL,
   `Date` datetime NOT NULL,
-  `TotalAmount` decimal(10,2) NOT NULL,
   `PaymentType` varchar(50) NOT NULL,
   PRIMARY KEY (`TransactionID`),
   KEY `CustomerID` (`CustomerID`),
-  CONSTRAINT `transaction_ibfk_1` FOREIGN KEY (`CustomerID`) REFERENCES `customer` (`CustomerID`),
-  CONSTRAINT `transaction_chk_1` CHECK ((`TotalAmount` >= 0))
+  CONSTRAINT `transaction_ibfk_1` FOREIGN KEY (`CustomerID`) REFERENCES `customer` (`CustomerID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -411,7 +409,6 @@ CREATE TABLE `transactionlineitem` (
   `Quantity` int NOT NULL,
   `ItemType` varchar(50) NOT NULL,
   `UnitPrice` decimal(8,2) NOT NULL,
-  `Subtotal` decimal(10,2) NOT NULL,
   `TicketID` int DEFAULT NULL,
   `ProductID` int DEFAULT NULL,
   `PassID` int DEFAULT NULL,
@@ -426,7 +423,6 @@ CREATE TABLE `transactionlineitem` (
   CONSTRAINT `transactionlineitem_ibfk_4` FOREIGN KEY (`PassID`) REFERENCES `parking` (`PassID`),
   CONSTRAINT `transactionlineitem_chk_1` CHECK ((`Quantity` > 0)),
   CONSTRAINT `transactionlineitem_chk_2` CHECK ((`UnitPrice` >= 0)),
-  CONSTRAINT `transactionlineitem_chk_3` CHECK ((`Subtotal` >= 0)),
   CONSTRAINT `transactionlineitem_chk_4` CHECK ((`ItemType` IN ('Ticket','Product','Parking'))),
   CONSTRAINT `transactionlineitem_chk_5` CHECK ((((`ItemType` = 'Ticket') AND (`TicketID` IS NOT NULL) AND (`ProductID` IS NULL) AND (`PassID` IS NULL)) OR ((`ItemType` = 'Product') AND (`ProductID` IS NOT NULL) AND (`TicketID` IS NULL) AND (`PassID` IS NULL)) OR ((`ItemType` = 'Parking') AND (`PassID` IS NOT NULL) AND (`TicketID` IS NULL) AND (`ProductID` IS NULL))))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
