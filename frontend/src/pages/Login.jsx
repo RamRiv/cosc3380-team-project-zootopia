@@ -52,7 +52,7 @@ function Login() {
         // (never save the password)
          localStorage.setItem('user', JSON.stringify({ username: user.username, role: user.role }))
 
-    navigate('/') // go to dashboard
+        navigate('/dashboard') // go to dashboard 
   }
 
   return (

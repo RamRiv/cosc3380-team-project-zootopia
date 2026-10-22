@@ -30,7 +30,7 @@ function Layout() {
       </header>
 
       <nav className="sidebar">
-        <NavLink to="/" end>Dashboard</NavLink>
+        <NavLink to="/dashboard">Dashboard</NavLink>
         <NavLink to="/animals">Animals</NavLink>
         <NavLink to="/employees">Employees</NavLink>
         <NavLink to="/customers">Customers</NavLink>

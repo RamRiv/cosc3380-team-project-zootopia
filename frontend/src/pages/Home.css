@@ -1,0 +1,70 @@
+/* keep everything in a centered column */
+.home {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.home-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.home-logo {
+  font-size: 22px;
+  font-weight: bold;
+}
+
+.home-header nav {
+  display: flex;
+  gap: 20px;
+}
+
+.home-header a {
+  color: #333;
+  text-decoration: none;
+}
+
+.home-hero {
+  padding: 60px 0;
+  text-align: center;
+}
+
+.home-section {
+  padding: 24px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.home-section table {
+  border-collapse: collapse;
+}
+
+.home-section th,
+.home-section td {
+  padding: 8px 24px 8px 0;
+  text-align: left;
+}
+
+/* animal cards side by side, wraps on small screens */
+.animal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.animal-card {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.home-footer {
+  padding: 24px 0;
+  text-align: center;
+  color: #888;
+}
