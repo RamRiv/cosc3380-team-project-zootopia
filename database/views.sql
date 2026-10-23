@@ -1,109 +1,78 @@
 -- Views for final_zoo_db
--- Run AFTER final_zoo_db.sql (schema), BEFORE or AFTER seed_data.sql.
--- Money totals are computed here (not stored on tables).
+-- Run after final_zoo_db.sql
 
-USE `final_zoo_db`;
+USE final_zoo_db;
 
-DROP VIEW IF EXISTS `v_lineitem_detail`;
-DROP VIEW IF EXISTS `v_transaction_totals`;
-DROP VIEW IF EXISTS `v_customer_spending`;
-DROP VIEW IF EXISTS `v_revenue_by_item_type`;
-DROP VIEW IF EXISTS `v_revenue_by_shop_stand`;
+DROP VIEW IF EXISTS v_transaction_totals;
+DROP VIEW IF EXISTS v_customer_spending;
+DROP VIEW IF EXISTS v_product_sales;
+DROP VIEW IF EXISTS v_enclosure_occupancy;
+DROP VIEW IF EXISTS v_low_stock;
 
--- ---------------------------------------------------------------------------
--- Each line item with computed Subtotal (Quantity * UnitPrice)
--- ---------------------------------------------------------------------------
-CREATE VIEW `v_lineitem_detail` AS
+-- Total for each sale: ticket + products
+CREATE VIEW v_transaction_totals AS
 SELECT
-  li.`LineItemID`,
-  li.`TransactionID`,
-  li.`Quantity`,
-  li.`ItemType`,
-  li.`UnitPrice`,
-  (li.`Quantity` * li.`UnitPrice`) AS `Subtotal`,
-  li.`TicketID`,
-  li.`ProductID`,
-  li.`PassID`
-FROM `transactionlineitem` li;
-
--- ---------------------------------------------------------------------------
--- Each transaction with computed TotalAmount (sum of line subtotals)
--- ---------------------------------------------------------------------------
-CREATE VIEW `v_transaction_totals` AS
-SELECT
-  t.`TransactionID`,
-  t.`CustomerID`,
-  t.`Date`,
-  t.`PaymentType`,
-  COALESCE(SUM(li.`Quantity` * li.`UnitPrice`), 0) AS `TotalAmount`
+  t.TransactionID,
+  t.CustomerID,
+  t.Date,
+  t.PaymentType,
+  COALESCE(tk.UnitPrice, 0)
+    + COALESCE(SUM(tp.Quantity * tp.UnitPrice), 0) AS TotalAmount
 FROM `transaction` t
-LEFT JOIN `transactionlineitem` li
-  ON li.`TransactionID` = t.`TransactionID`
+LEFT JOIN ticket tk
+  ON tk.TransactionID = t.TransactionID
+LEFT JOIN transactionproduct tp
+  ON tp.TransactionID = t.TransactionID
 GROUP BY
-  t.`TransactionID`,
-  t.`CustomerID`,
-  t.`Date`,
-  t.`PaymentType`;
+  t.TransactionID,
+  t.CustomerID,
+  t.Date,
+  t.PaymentType,
+  tk.UnitPrice;
 
--- ---------------------------------------------------------------------------
--- Lifetime spend per customer (for reports)
--- ---------------------------------------------------------------------------
-CREATE VIEW `v_customer_spending` AS
+-- How much each customer has spent
+CREATE VIEW v_customer_spending AS
 SELECT
-  c.`CustomerID`,
-  c.`FirstName`,
-  c.`LastName`,
-  c.`EmailAddress`,
-  c.`MembershipType`,
-  COUNT(DISTINCT vt.`TransactionID`) AS `TransactionCount`,
-  COALESCE(SUM(vt.`TotalAmount`), 0) AS `LifetimeSpend`
-FROM `customer` c
-LEFT JOIN `v_transaction_totals` vt
-  ON vt.`CustomerID` = c.`CustomerID`
+  c.CustomerID,
+  c.Email,
+  COUNT(vt.TransactionID) AS TransactionCount,
+  COALESCE(SUM(vt.TotalAmount), 0) AS LifetimeSpend
+FROM customer c
+LEFT JOIN v_transaction_totals vt
+  ON vt.CustomerID = c.CustomerID
 GROUP BY
-  c.`CustomerID`,
-  c.`FirstName`,
-  c.`LastName`,
-  c.`EmailAddress`,
-  c.`MembershipType`;
+  c.CustomerID,
+  c.Email;
 
--- ---------------------------------------------------------------------------
--- Revenue grouped by ItemType (Ticket / Product / Parking)
--- ---------------------------------------------------------------------------
-CREATE VIEW `v_revenue_by_item_type` AS
+-- Product sales (good for a report)
+CREATE VIEW v_product_sales AS
 SELECT
-  li.`ItemType`,
-  SUM(li.`Quantity`) AS `UnitsSold`,
-  SUM(li.`Quantity` * li.`UnitPrice`) AS `Revenue`
-FROM `transactionlineitem` li
-GROUP BY li.`ItemType`;
-
--- ---------------------------------------------------------------------------
--- Product revenue by gift shop or food stand
--- (only Product line items; shop/stand come from product)
--- ---------------------------------------------------------------------------
-CREATE VIEW `v_revenue_by_shop_stand` AS
-SELECT
-  CASE
-    WHEN p.`ShopID` IS NOT NULL THEN 'Gift Shop'
-    WHEN p.`StandID` IS NOT NULL THEN 'Food Stand'
-  END AS `LocationType`,
-  COALESCE(gs.`ShopID`, fs.`StandID`) AS `LocationID`,
-  COALESCE(gs.`Name`, fs.`Name`) AS `LocationName`,
-  SUM(li.`Quantity`) AS `UnitsSold`,
-  SUM(li.`Quantity` * li.`UnitPrice`) AS `Revenue`
-FROM `transactionlineitem` li
-INNER JOIN `product` p
-  ON p.`ProductID` = li.`ProductID`
-LEFT JOIN `giftshop` gs
-  ON gs.`ShopID` = p.`ShopID`
-LEFT JOIN `foodstand` fs
-  ON fs.`StandID` = p.`StandID`
-WHERE li.`ItemType` = 'Product'
+  p.ProductID,
+  p.Name,
+  p.ShopID,
+  SUM(tp.Quantity) AS UnitsSold,
+  SUM(tp.Quantity * tp.UnitPrice) AS Revenue
+FROM product p
+LEFT JOIN transactionproduct tp
+  ON tp.ProductID = p.ProductID
 GROUP BY
-  CASE
-    WHEN p.`ShopID` IS NOT NULL THEN 'Gift Shop'
-    WHEN p.`StandID` IS NOT NULL THEN 'Food Stand'
-  END,
-  COALESCE(gs.`ShopID`, fs.`StandID`),
-  COALESCE(gs.`Name`, fs.`Name`);
+  p.ProductID,
+  p.Name,
+  p.ShopID;
+
+-- Animals vs capacity (good for a query)
+CREATE VIEW v_enclosure_occupancy AS
+SELECT
+  e.EnclosureID,
+  e.Name,
+  e.Capacity,
+  COUNT(a.AnimalID) AS AnimalCount,
+  e.Capacity - COUNT(a.AnimalID) AS SpotsLeft
+FROM enclosure e
+LEFT JOIN animal a
+  ON a.EnclosureID = e.EnclosureID
+GROUP BY
+  e.EnclosureID,
+  e.Name,
+  e.Capacity;
+

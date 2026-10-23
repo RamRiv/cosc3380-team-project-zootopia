@@ -1,96 +1,57 @@
 require("dotenv").config();
-const http = require("http");
-const mysql = require("mysql2/promise");
+const express = require("express");
+const pool = require("./db");
 
-const pool = mysql.createPool({
-    host: process.env.DB_HOST,
-    port: Number(process.env.DB_PORT || 3306),
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    waitForConnections: true,
-    connectionLimit: 10
-});
-
+const app = express();
 const PORT = process.env.PORT || 3000;
 
-const server = http.createServer(async (req, res) => {
-    const url = new URL(
-        req.url,
-        `http://${req.headers.host || "localhost"}`
-    );
+app.use(express.json());
+//animal routes
+const animalsRouter = require("./routes/animals");
+app.use("/api/animals", animalsRouter);
 
-    // Test the database connection
-    if (req.method === "GET" && url.pathname === "/api/health") {
-        try {
-            const connection = await pool.getConnection();
-            connection.release();
+//enclosure routes
+const enclosuresRouter = require("./routes/enclosures");
+app.use("/api/enclosures", enclosuresRouter);
 
-            res.writeHead(200, {
-                "Content-Type": "application/json"
-            });
+//species routes
+const speciesRouter = require("./routes/species");
+app.use("/api/species", speciesRouter);
 
-            res.end(JSON.stringify({
-                message: "Database connected!"
-            }));
-        } catch (error) {
-            console.error(
-                "Database connection failed:",
-                error.message
-            );
+//shop routes
+const shopsRouter = require("./routes/shops");
+app.use("/api/shops", shopsRouter);
 
-            res.writeHead(500, {
-                "Content-Type": "application/json"
-            });
+//product routes
+const productsRouter = require("./routes/products");
+app.use("/api/products", productsRouter);
 
-            res.end(JSON.stringify({
-                error: "Database connection failed"
-            }));
-        }
+//attractions routes
+const attractionsRouter = require("./routes/attractions");
+app.use("/api/attractions", attractionsRouter);
 
-        return;
-    }
+//closures routes
+const closuresRouter = require("./routes/closures");
+app.use("/api/closures", closuresRouter);
 
-    // Retrieve animal records
-    if (req.method === "GET" && url.pathname === "/api/animals") {
-        try {
-            const [rows] = await pool.query(
-                "SELECT * FROM animal LIMIT 100"
-            );
-
-            res.writeHead(200, {
-                "Content-Type": "application/json"
-            });
-
-            res.end(JSON.stringify(rows));
-        } catch (error) {
-            console.error(
-                "Error retrieving animals:",
-                error.message
-            );
-
-            res.writeHead(500, {
-                "Content-Type": "application/json"
-            });
-
-            res.end(JSON.stringify({
-                error: "Could not retrieve animals"
-            }));
-        }
-
-        return;
-    }
-
-    // Handle unknown routes
-    res.writeHead(404, {
-        "Content-Type": "application/json"
-    });
-
-    res.end(JSON.stringify({
-        error: "Route not found"
-    }));
+// check db connection
+app.get("/api/health", async (req, res) => {
+  try {
+    const connection = await pool.getConnection();
+    connection.release();
+    res.json({ message: "Database connected!" });
+  } catch (error) {
+    console.error("Database connection failed:", error.message);
+    res.status(500).json({ error: "Database connection failed" });
+  }
 });
 
-server.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
+
+
+app.use((req, res) => {
+  res.status(404).json({ error: "Route not found" });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running at http://localhost:${PORT}`);
 });
