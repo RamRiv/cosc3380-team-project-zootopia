@@ -64,15 +64,19 @@ GROUP BY
 CREATE VIEW v_enclosure_occupancy AS
 SELECT
   e.EnclosureID,
-  e.Name,
+  e.Name AS EnclosureName,
   e.Capacity,
   COUNT(a.AnimalID) AS AnimalCount,
-  e.Capacity - COUNT(a.AnimalID) AS SpotsLeft
+  e.Capacity - COUNT(a.AnimalID) AS RemainingCapacity,
+  ROUND(
+    COUNT(a.AnimalID) * 100.0 / NULLIF(e.Capacity, 0), 2
+  ) AS CapacityPercentage
 FROM enclosure e
 LEFT JOIN animal a
   ON a.EnclosureID = e.EnclosureID
 GROUP BY
   e.EnclosureID,
   e.Name,
-  e.Capacity;
+  e.Capacity
+ORDER BY CapacityPercentage DESC;
 
