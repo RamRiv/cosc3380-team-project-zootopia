@@ -18,6 +18,14 @@ app.use("/api/enclosures", enclosuresRouter);
 const speciesRouter = require("./routes/species");
 app.use("/api/species", speciesRouter);
 
+//shop routes
+const shopsRouter = require("./routes/shops");
+app.use("/api/shops", shopsRouter);
+
+//product routes
+const productsRouter = require("./routes/products");
+app.use("/api/products", productsRouter);
+
 // check db connection
 app.get("/api/health", async (req, res) => {
   try {
