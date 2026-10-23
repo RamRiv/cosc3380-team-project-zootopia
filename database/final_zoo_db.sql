@@ -5,6 +5,7 @@ USE `final_zoo_db`;
 -- Host: 127.0.0.1    Database: final_zoo_db
 -- ------------------------------------------------------
 -- Server version	8.0.46
+-- Final schema: Users login, 1 Ticket per Transaction, Employee_Shop
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -40,10 +41,6 @@ CREATE TABLE `animal` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `animal`
---
-
 LOCK TABLES `animal` WRITE;
 /*!40000 ALTER TABLE `animal` DISABLE KEYS */;
 /*!40000 ALTER TABLE `animal` ENABLE KEYS */;
@@ -61,18 +58,12 @@ CREATE TABLE `attraction` (
   `Name` varchar(100) NOT NULL,
   `Type` varchar(50) NOT NULL,
   `Schedule` datetime NOT NULL,
-  `Location` varchar(100) NOT NULL,
-  `Capacity` int NOT NULL,
-  `IsIndoor` tinyint(1) NOT NULL,
-  `Status` varchar(50) NOT NULL,
+  `EnclosureID` int NOT NULL,
   PRIMARY KEY (`AttractionID`),
-  CONSTRAINT `attraction_chk_1` CHECK ((`Capacity` > 0))
+  KEY `EnclosureID` (`EnclosureID`),
+  CONSTRAINT `attraction_ibfk_1` FOREIGN KEY (`EnclosureID`) REFERENCES `enclosure` (`EnclosureID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `attraction`
---
 
 LOCK TABLES `attraction` WRITE;
 /*!40000 ALTER TABLE `attraction` DISABLE KEYS */;
@@ -88,20 +79,11 @@ DROP TABLE IF EXISTS `customer`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `customer` (
   `CustomerID` int NOT NULL AUTO_INCREMENT,
-  `FirstName` varchar(50) NOT NULL,
-  `LastName` varchar(50) NOT NULL,
-  `EmailAddress` varchar(100) NOT NULL,
-  `PhoneNumber` varchar(25) NOT NULL,
-  `MembershipType` varchar(50) DEFAULT NULL,
+  `Email` varchar(100) NOT NULL,
   PRIMARY KEY (`CustomerID`),
-  UNIQUE KEY `EmailAddress` (`EmailAddress`),
-  UNIQUE KEY `PhoneNumber` (`PhoneNumber`)
+  UNIQUE KEY `Email` (`Email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `customer`
---
 
 LOCK TABLES `customer` WRITE;
 /*!40000 ALTER TABLE `customer` DISABLE KEYS */;
@@ -119,21 +101,15 @@ CREATE TABLE `employee` (
   `EmployeeID` int NOT NULL AUTO_INCREMENT,
   `FirstName` varchar(50) NOT NULL,
   `LastName` varchar(50) NOT NULL,
-  `Age` int NOT NULL,
-  `Gender` varchar(20) NOT NULL,
-  `JobRole` varchar(50) NOT NULL,
   `HireDate` date NOT NULL,
   `PhoneNumber` varchar(25) NOT NULL,
   `EmailAddress` varchar(100) NOT NULL,
   `Salary` decimal(10,2) NOT NULL,
   `SupervisorID` int DEFAULT NULL,
   `EnclosureID` int DEFAULT NULL,
-  `Username` varchar(50) DEFAULT NULL,
-  `PasswordHash` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`EmployeeID`),
   UNIQUE KEY `PhoneNumber` (`PhoneNumber`),
   UNIQUE KEY `EmailAddress` (`EmailAddress`),
-  UNIQUE KEY `Username` (`Username`),
   KEY `SupervisorID` (`SupervisorID`),
   KEY `EnclosureID` (`EnclosureID`),
   CONSTRAINT `employee_ibfk_1` FOREIGN KEY (`SupervisorID`) REFERENCES `employee` (`EmployeeID`),
@@ -142,13 +118,31 @@ CREATE TABLE `employee` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `employee`
---
-
 LOCK TABLES `employee` WRITE;
 /*!40000 ALTER TABLE `employee` DISABLE KEYS */;
 /*!40000 ALTER TABLE `employee` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `employee_shop`
+--
+
+DROP TABLE IF EXISTS `employee_shop`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `employee_shop` (
+  `EmployeeID` int NOT NULL,
+  `ShopID` int NOT NULL,
+  PRIMARY KEY (`EmployeeID`,`ShopID`),
+  KEY `ShopID` (`ShopID`),
+  CONSTRAINT `employee_shop_ibfk_1` FOREIGN KEY (`EmployeeID`) REFERENCES `employee` (`EmployeeID`),
+  CONSTRAINT `employee_shop_ibfk_2` FOREIGN KEY (`ShopID`) REFERENCES `shop` (`ShopID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+LOCK TABLES `employee_shop` WRITE;
+/*!40000 ALTER TABLE `employee_shop` DISABLE KEYS */;
+/*!40000 ALTER TABLE `employee_shop` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -164,94 +158,16 @@ CREATE TABLE `enclosure` (
   `HabitatType` varchar(50) NOT NULL,
   `Capacity` int NOT NULL,
   `Location` varchar(100) NOT NULL,
-  `IsIndoor` tinyint(1) NOT NULL,
-  `Status` varchar(50) NOT NULL,
+  `Status` varchar(20) NOT NULL,
   PRIMARY KEY (`EnclosureID`),
-  CONSTRAINT `enclosure_chk_1` CHECK ((`Capacity` > 0))
+  CONSTRAINT `enclosure_chk_1` CHECK ((`Capacity` > 0)),
+  CONSTRAINT `enclosure_chk_2` CHECK ((`Status` IN ('Open','Closed')))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `enclosure`
---
 
 LOCK TABLES `enclosure` WRITE;
 /*!40000 ALTER TABLE `enclosure` DISABLE KEYS */;
 /*!40000 ALTER TABLE `enclosure` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `foodstand`
---
-
-DROP TABLE IF EXISTS `foodstand`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `foodstand` (
-  `StandID` int NOT NULL AUTO_INCREMENT,
-  `Name` varchar(100) NOT NULL,
-  `Location` varchar(100) NOT NULL,
-  PRIMARY KEY (`StandID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `foodstand`
---
-
-LOCK TABLES `foodstand` WRITE;
-/*!40000 ALTER TABLE `foodstand` DISABLE KEYS */;
-/*!40000 ALTER TABLE `foodstand` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `giftshop`
---
-
-DROP TABLE IF EXISTS `giftshop`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `giftshop` (
-  `ShopID` int NOT NULL AUTO_INCREMENT,
-  `Name` varchar(100) NOT NULL,
-  `Location` varchar(100) NOT NULL,
-  PRIMARY KEY (`ShopID`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `giftshop`
---
-
-LOCK TABLES `giftshop` WRITE;
-/*!40000 ALTER TABLE `giftshop` DISABLE KEYS */;
-/*!40000 ALTER TABLE `giftshop` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `parking`
---
-
-DROP TABLE IF EXISTS `parking`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `parking` (
-  `PassID` int NOT NULL AUTO_INCREMENT,
-  `Type` varchar(50) NOT NULL,
-  `Price` decimal(8,2) NOT NULL,
-  `Date` date NOT NULL,
-  PRIMARY KEY (`PassID`),
-  CONSTRAINT `parking_chk_1` CHECK ((`Price` >= 0))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `parking`
---
-
-LOCK TABLES `parking` WRITE;
-/*!40000 ALTER TABLE `parking` DISABLE KEYS */;
-/*!40000 ALTER TABLE `parking` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -267,26 +183,40 @@ CREATE TABLE `product` (
   `Price` decimal(8,2) NOT NULL,
   `Category` varchar(50) NOT NULL,
   `QuantityInStock` int NOT NULL,
-  `ShopID` int DEFAULT NULL,
-  `StandID` int DEFAULT NULL,
+  `ShopID` int NOT NULL,
   PRIMARY KEY (`ProductID`),
   KEY `ShopID` (`ShopID`),
-  KEY `StandID` (`StandID`),
-  CONSTRAINT `product_ibfk_1` FOREIGN KEY (`ShopID`) REFERENCES `giftshop` (`ShopID`),
-  CONSTRAINT `product_ibfk_2` FOREIGN KEY (`StandID`) REFERENCES `foodstand` (`StandID`),
+  CONSTRAINT `product_ibfk_1` FOREIGN KEY (`ShopID`) REFERENCES `shop` (`ShopID`),
   CONSTRAINT `product_chk_1` CHECK ((`Price` >= 0)),
-  CONSTRAINT `product_chk_2` CHECK ((`QuantityInStock` >= 0)),
-  CONSTRAINT `product_chk_3` CHECK ((((`ShopID` IS NOT NULL) AND (`StandID` IS NULL)) OR ((`ShopID` IS NULL) AND (`StandID` IS NOT NULL))))
+  CONSTRAINT `product_chk_2` CHECK ((`QuantityInStock` >= 0))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `product`
---
 
 LOCK TABLES `product` WRITE;
 /*!40000 ALTER TABLE `product` DISABLE KEYS */;
 /*!40000 ALTER TABLE `product` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `shop`
+--
+
+DROP TABLE IF EXISTS `shop`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `shop` (
+  `ShopID` int NOT NULL AUTO_INCREMENT,
+  `Name` varchar(100) NOT NULL,
+  `Location` varchar(100) NOT NULL,
+  `ShopType` varchar(20) NOT NULL,
+  PRIMARY KEY (`ShopID`),
+  CONSTRAINT `shop_chk_1` CHECK ((`ShopType` IN ('Gift','Food')))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+LOCK TABLES `shop` WRITE;
+/*!40000 ALTER TABLE `shop` DISABLE KEYS */;
+/*!40000 ALTER TABLE `shop` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -307,10 +237,6 @@ CREATE TABLE `species` (
   UNIQUE KEY `ScientificName` (`ScientificName`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `species`
---
 
 LOCK TABLES `species` WRITE;
 /*!40000 ALTER TABLE `species` DISABLE KEYS */;
@@ -334,10 +260,6 @@ CREATE TABLE `species_enclosure` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `species_enclosure`
---
-
 LOCK TABLES `species_enclosure` WRITE;
 /*!40000 ALTER TABLE `species_enclosure` DISABLE KEYS */;
 /*!40000 ALTER TABLE `species_enclosure` ENABLE KEYS */;
@@ -352,17 +274,16 @@ DROP TABLE IF EXISTS `ticket`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `ticket` (
   `TicketID` int NOT NULL AUTO_INCREMENT,
-  `Type` varchar(50) NOT NULL,
-  `Date` date NOT NULL,
-  `Price` decimal(8,2) NOT NULL,
+  `TransactionID` int NOT NULL,
+  `Type` varchar(20) NOT NULL,
+  `UnitPrice` decimal(8,2) NOT NULL,
   PRIMARY KEY (`TicketID`),
-  CONSTRAINT `ticket_chk_1` CHECK ((`Price` >= 0))
+  UNIQUE KEY `TransactionID` (`TransactionID`),
+  CONSTRAINT `ticket_ibfk_1` FOREIGN KEY (`TransactionID`) REFERENCES `transaction` (`TransactionID`),
+  CONSTRAINT `ticket_chk_1` CHECK ((`UnitPrice` >= 0)),
+  CONSTRAINT `ticket_chk_2` CHECK ((`Type` IN ('Adult','Child','Senior')))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ticket`
---
 
 LOCK TABLES `ticket` WRITE;
 /*!40000 ALTER TABLE `ticket` DISABLE KEYS */;
@@ -387,54 +308,79 @@ CREATE TABLE `transaction` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
---
--- Dumping data for table `transaction`
---
-
 LOCK TABLES `transaction` WRITE;
 /*!40000 ALTER TABLE `transaction` DISABLE KEYS */;
 /*!40000 ALTER TABLE `transaction` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
--- Table structure for table `transactionlineitem`
+-- Table structure for table `transactionproduct`
 --
 
-DROP TABLE IF EXISTS `transactionlineitem`;
+DROP TABLE IF EXISTS `transactionproduct`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `transactionlineitem` (
-  `LineItemID` int NOT NULL AUTO_INCREMENT,
+CREATE TABLE `transactionproduct` (
   `TransactionID` int NOT NULL,
+  `ProductID` int NOT NULL,
   `Quantity` int NOT NULL,
-  `ItemType` varchar(50) NOT NULL,
   `UnitPrice` decimal(8,2) NOT NULL,
-  `TicketID` int DEFAULT NULL,
-  `ProductID` int DEFAULT NULL,
-  `PassID` int DEFAULT NULL,
-  PRIMARY KEY (`LineItemID`),
-  KEY `TransactionID` (`TransactionID`),
-  KEY `TicketID` (`TicketID`),
+  PRIMARY KEY (`TransactionID`,`ProductID`),
   KEY `ProductID` (`ProductID`),
-  KEY `PassID` (`PassID`),
-  CONSTRAINT `transactionlineitem_ibfk_1` FOREIGN KEY (`TransactionID`) REFERENCES `transaction` (`TransactionID`),
-  CONSTRAINT `transactionlineitem_ibfk_2` FOREIGN KEY (`TicketID`) REFERENCES `ticket` (`TicketID`),
-  CONSTRAINT `transactionlineitem_ibfk_3` FOREIGN KEY (`ProductID`) REFERENCES `product` (`ProductID`),
-  CONSTRAINT `transactionlineitem_ibfk_4` FOREIGN KEY (`PassID`) REFERENCES `parking` (`PassID`),
-  CONSTRAINT `transactionlineitem_chk_1` CHECK ((`Quantity` > 0)),
-  CONSTRAINT `transactionlineitem_chk_2` CHECK ((`UnitPrice` >= 0)),
-  CONSTRAINT `transactionlineitem_chk_4` CHECK ((`ItemType` IN ('Ticket','Product','Parking'))),
-  CONSTRAINT `transactionlineitem_chk_5` CHECK ((((`ItemType` = 'Ticket') AND (`TicketID` IS NOT NULL) AND (`ProductID` IS NULL) AND (`PassID` IS NULL)) OR ((`ItemType` = 'Product') AND (`ProductID` IS NOT NULL) AND (`TicketID` IS NULL) AND (`PassID` IS NULL)) OR ((`ItemType` = 'Parking') AND (`PassID` IS NOT NULL) AND (`TicketID` IS NULL) AND (`ProductID` IS NULL))))
+  CONSTRAINT `transactionproduct_ibfk_1` FOREIGN KEY (`TransactionID`) REFERENCES `transaction` (`TransactionID`),
+  CONSTRAINT `transactionproduct_ibfk_2` FOREIGN KEY (`ProductID`) REFERENCES `product` (`ProductID`),
+  CONSTRAINT `transactionproduct_chk_1` CHECK ((`Quantity` > 0)),
+  CONSTRAINT `transactionproduct_chk_2` CHECK ((`UnitPrice` >= 0))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
+LOCK TABLES `transactionproduct` WRITE;
+/*!40000 ALTER TABLE `transactionproduct` DISABLE KEYS */;
+/*!40000 ALTER TABLE `transactionproduct` ENABLE KEYS */;
+UNLOCK TABLES;
+
 --
--- Dumping data for table `transactionlineitem`
+-- Table structure for table `users`
 --
 
-LOCK TABLES `transactionlineitem` WRITE;
-/*!40000 ALTER TABLE `transactionlineitem` DISABLE KEYS */;
-/*!40000 ALTER TABLE `transactionlineitem` ENABLE KEYS */;
+DROP TABLE IF EXISTS `users`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `users` (
+  `UserID` int NOT NULL AUTO_INCREMENT,
+  `Username` varchar(100) NOT NULL,
+  `Password` varchar(255) NOT NULL,
+  `Role` varchar(20) NOT NULL,
+  `EmployeeID` int DEFAULT NULL,
+  `CustomerID` int DEFAULT NULL,
+  PRIMARY KEY (`UserID`),
+  UNIQUE KEY `Username` (`Username`),
+  UNIQUE KEY `EmployeeID` (`EmployeeID`),
+  UNIQUE KEY `CustomerID` (`CustomerID`),
+  CONSTRAINT `users_ibfk_1` FOREIGN KEY (`EmployeeID`) REFERENCES `employee` (`EmployeeID`),
+  CONSTRAINT `users_ibfk_2` FOREIGN KEY (`CustomerID`) REFERENCES `customer` (`CustomerID`),
+  CONSTRAINT `users_chk_role` CHECK (
+    `Role` IN ('Customer', 'Zookeeper', 'Cashier', 'Manager')
+  ),
+  CONSTRAINT `users_chk_link` CHECK (
+    (
+      `Role` = 'Customer'
+      AND `CustomerID` IS NOT NULL
+      AND `EmployeeID` IS NULL
+    )
+    OR
+    (
+      `Role` IN ('Manager', 'Zookeeper', 'Cashier')
+      AND `EmployeeID` IS NOT NULL
+      AND `CustomerID` IS NULL
+    )
+  )
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+LOCK TABLES `users` WRITE;
+/*!40000 ALTER TABLE `users` DISABLE KEYS */;
+/*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -447,28 +393,32 @@ DROP TABLE IF EXISTS `zooclosure`;
 CREATE TABLE `zooclosure` (
   `ClosureID` int NOT NULL AUTO_INCREMENT,
   `Date` date NOT NULL,
-  `Scope` varchar(50) NOT NULL,
   `Reason` varchar(100) NOT NULL,
+  `Scope` varchar(20) NOT NULL,
   `EnclosureID` int DEFAULT NULL,
-  `AttractionID` int DEFAULT NULL,
   PRIMARY KEY (`ClosureID`),
   KEY `EnclosureID` (`EnclosureID`),
-  KEY `AttractionID` (`AttractionID`),
   CONSTRAINT `zooclosure_ibfk_1` FOREIGN KEY (`EnclosureID`) REFERENCES `enclosure` (`EnclosureID`),
-  CONSTRAINT `zooclosure_ibfk_2` FOREIGN KEY (`AttractionID`) REFERENCES `attraction` (`AttractionID`),
-  CONSTRAINT `zooclosure_chk_1` CHECK ((`Scope` IN ('Full Zoo','Enclosure','Attraction'))),
-  CONSTRAINT `zooclosure_chk_2` CHECK ((((`Scope` = 'Full Zoo') AND (`EnclosureID` IS NULL) AND (`AttractionID` IS NULL)) OR ((`Scope` = 'Enclosure') AND (`EnclosureID` IS NOT NULL) AND (`AttractionID` IS NULL)) OR ((`Scope` = 'Attraction') AND (`AttractionID` IS NOT NULL) AND (`EnclosureID` IS NULL))))
+  CONSTRAINT `zooclosure_chk_1` CHECK ((`Scope` IN ('FullZoo','Enclosure'))),
+  CONSTRAINT `zooclosure_chk_2` CHECK (
+    (
+      `Scope` = 'FullZoo'
+      AND `EnclosureID` IS NULL
+    )
+    OR
+    (
+      `Scope` = 'Enclosure'
+      AND `EnclosureID` IS NOT NULL
+    )
+  )
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `zooclosure`
---
 
 LOCK TABLES `zooclosure` WRITE;
 /*!40000 ALTER TABLE `zooclosure` DISABLE KEYS */;
 /*!40000 ALTER TABLE `zooclosure` ENABLE KEYS */;
 UNLOCK TABLES;
+
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -479,4 +429,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-10-20 17:14:09
+-- Dump completed on 2026-10-22
