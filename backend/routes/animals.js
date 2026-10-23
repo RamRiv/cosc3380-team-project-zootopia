@@ -5,13 +5,75 @@ const router = express.Router();
 // GET /api/animals
 router.get("/", async (req, res) => {
     try {
-      const [rows] = await pool.query("SELECT * FROM animal");
+      const [rows] = await pool.query(`
+        SELECT
+        a.AnimalID,
+        a.Name AS AnimalName,
+        a.Sex,
+        a.DateOfBirth,
+        a.AcquisitionDate,
+        s.CommonName AS Species,
+        e.Name AS Enclosure
+      FROM animal a
+      JOIN species s ON a.SpeciesID = s.SpeciesID
+      JOIN enclosure e ON a.EnclosureID = e.EnclosureID
+      ORDER BY a.Name
+    `);
       res.json(rows);
     } catch (error) {
       console.error(error.message);
       res.status(500).json({ error: "Could not get animals" });
     }
   });
+
+  // GET /api/animals/search?species=Zebra
+router.get("/search", async (req, res) => {
+  const { species, enclosureId, sex } = req.query;
+
+  try {
+    let sql = `
+      SELECT
+        a.AnimalID,
+        a.Name AS AnimalName,
+        a.Sex,
+        a.DateOfBirth,
+        a.AcquisitionDate,
+        s.CommonName AS Species,
+        s.ConservationStatus,
+        e.Name AS Enclosure,
+        e.Status AS EnclosureStatus
+      FROM animal a
+      JOIN species s ON a.SpeciesID = s.SpeciesID
+      JOIN enclosure e ON a.EnclosureID = e.EnclosureID
+      WHERE 1 = 1
+    `;
+
+    const params = [];
+
+    if (species) {
+      sql += " AND s.CommonName LIKE ?";
+      params.push(`%${species}%`);
+    }
+
+    if (enclosureId) {
+      sql += " AND a.EnclosureID = ?";
+      params.push(enclosureId);
+    }
+
+    if (sex) {
+      sql += " AND a.Sex = ?";
+      params.push(sex);
+    }
+
+    sql += " ORDER BY a.Name";
+
+    const [rows] = await pool.query(sql, params);
+    res.json(rows);
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).json({ error: "Could not search animals" });
+  }
+});
 
 
   // GET /api/animals/:id
