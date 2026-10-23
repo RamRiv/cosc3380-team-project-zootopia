@@ -26,6 +26,14 @@ app.use("/api/shops", shopsRouter);
 const productsRouter = require("./routes/products");
 app.use("/api/products", productsRouter);
 
+//attractions routes
+const attractionsRouter = require("./routes/attractions");
+app.use("/api/attractions", attractionsRouter);
+
+//closures routes
+const closuresRouter = require("./routes/closures");
+app.use("/api/closures", closuresRouter);
+
 // check db connection
 app.get("/api/health", async (req, res) => {
   try {
