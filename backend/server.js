@@ -28,6 +28,9 @@ const { handleClosures } = require("./routes/closures");
 // auth route
 const { handleAuth } = require("./routes/auth");
 
+// reports route
+const { handleReports } = require("./routes/reports");
+
 function sendJson(res, statusCode, data) {
   res.writeHead(statusCode, { "Content-Type": "application/json" });
   res.end(JSON.stringify(data));
@@ -78,6 +81,9 @@ const server = http.createServer(async (req, res) => {
     return handleClosures(req, res, pathname);
   }
 
+  if (pathname === "/api/reports" || pathname.startsWith("/api/reports/")) {
+    return handleReports(req, res, pathname);
+  }
 
   if (pathname === "/api/login" || pathname === "/api/signup") {
     return handleAuth(req, res, pathname);
