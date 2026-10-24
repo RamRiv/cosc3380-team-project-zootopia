@@ -23,8 +23,8 @@ function Layout() {
       <header className="topbar">
         <span className="logo">Zoo Admin</span>
         <div className="user">
-          {/* hardcoded for now, will come from login later */}
-                    <span>{user.username} ({user.role})</span>
+            {/* who's logged in, saved by the login page */}
+             <span>{user.username} ({user.role})</span>
           <button onClick={handleLogout}>Logout</button>
         </div>
       </header>
