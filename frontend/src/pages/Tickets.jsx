@@ -45,7 +45,7 @@ function Tickets() {
   return (
     <div className="home">
       <h1>Buy Tickets</h1>
-      <p>Logged in as {customer.firstName} {customer.lastName}</p>
+        <p>Logged in as {customer.email}</p>
 
       <form onSubmit={handleBuy}>
         <label>Visit date </label>
