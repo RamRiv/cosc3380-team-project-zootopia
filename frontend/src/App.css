@@ -129,3 +129,52 @@
   color: #c0392b;
   margin: 0;
 }
+
+/* success / error banners */
+.message {
+  padding: 10px 14px;
+  border-radius: 6px;
+}
+.message.success {
+  background: #e3f4e8;
+  color: #1f5f3a;
+}
+.message.error {
+  background: #fbe4e1;
+  color: #a12a1b;
+}
+
+/* add/edit form: labels on the left, boxes on the right */
+.data-form {
+  display: grid;
+  grid-template-columns: 180px 260px;
+  gap: 8px 12px;
+  align-items: center;
+  margin-bottom: 28px;
+}
+.data-form h3,
+.form-buttons {
+  grid-column: 1 / 3;
+}
+.form-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* reusable table */
+.data-table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.data-table th,
+.data-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #ddd;
+  text-align: left;
+}
+.data-table th {
+  background: #f3f4f1;
+}
+.data-table td button {
+  margin-right: 6px;
+}

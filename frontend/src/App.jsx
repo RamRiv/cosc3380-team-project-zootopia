@@ -8,6 +8,7 @@ import Signup from './pages/Signup.jsx'
 import Tickets from './pages/Tickets.jsx'
 import './App.css'
 import CustomerLogin from './pages/CustomerLogin.jsx'
+import Animals from './pages/Animals.jsx'
 
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
       {/* staff pages, need login, get the top bar + sidebar */}
       <Route element={<Layout />}>
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/animals" element={<Animals />} />
         <Route path="*" element={<ComingSoon />} />
       </Route>
     </Routes>
