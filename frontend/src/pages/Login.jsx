@@ -1,19 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router'
 
+// staff login. checks username/password with the backend (/api/login)
 
-// login form. for now it just checks the boxes aren't empty and goes to the dashboard
-// later it'll check username/password with the backend
-// login form. checks against TEST_USERS for now
-// later it'll check username/password with the backend
 
-// TEMP fake accounts until the backend login works
-// delete this once we hook up the real database
-const TEST_USERS = [
-  { username: 'mclark', password: 'test123', role: 'Director' },
-  { username: 'tkim', password: 'test123', role: 'Keeper' },
-  { username: 'qbaker', password: 'test123', role: 'Cashier' },
-]
+
+
 
 function Login() {
   // what's typed in each box
@@ -26,33 +18,50 @@ function Login() {
   // lets us change pages from code
   const navigate = useNavigate()
 
- function handleSubmit(e) {
-    e.preventDefault() // stops the browser from reloading the page
+   // async = this function waits for the backend to answer
+  async function handleSubmit(e) {
+    e.preventDefault()
 
-    // empty string counts as false, so this catches either box being empty
     if (!username || !password) {
       setError('Please fill in both fields')
-      return // stop here, don't log in
-    }
-
-    // look for an account where both username and password match
-    const user = TEST_USERS.find(
-      (u) => u.username === username && u.password === password
-    )
-
-    if (!user) {
-      setError('Invalid username or password')
       return
     }
 
-    // made it past both checks, so log in
-    setError('') // clear old error
-    console.log('logged in as', user.username, 'role:', user.role)
-        // remember who logged in so other pages can see it
-        // (never save the password)
-         localStorage.setItem('user', JSON.stringify({ username: user.username, role: user.role }))
+    try {
+      // send what they typed to the backend
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password }),
+      })
 
-        navigate('/dashboard') // go to dashboard 
+      // turn the backend's answer into an object
+      const data = await response.json()
+
+      // backend said no (wrong username or password)
+      if (!response.ok) {
+        setError(data.error)
+        return
+      }
+
+      // customers have their own login page
+      if (data.role === 'Customer') {
+        setError('This login is for staff only')
+        return
+      }
+
+      // remember who logged in
+      setError('')
+      localStorage.setItem('user', JSON.stringify({
+        username: data.username,
+        role: data.role,
+        employeeId: data.employeeId,
+      }))
+      navigate('/dashboard')
+    } catch (err) {
+      // couldn't reach the backend at all
+      setError('Could not connect to the server')
+    }
   }
 
   return (
