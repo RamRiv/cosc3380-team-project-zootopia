@@ -25,6 +25,9 @@ const { handleAttractions } = require("./routes/attractions");
 // closures route
 const { handleClosures } = require("./routes/closures");
 
+// auth route
+const { handleAuth } = require("./routes/auth");
+
 function sendJson(res, statusCode, data) {
   res.writeHead(statusCode, { "Content-Type": "application/json" });
   res.end(JSON.stringify(data));
@@ -73,6 +76,11 @@ const server = http.createServer(async (req, res) => {
 
   if (pathname === "/api/closures" || pathname.startsWith("/api/closures/")) {
     return handleClosures(req, res, pathname);
+  }
+
+
+  if (pathname === "/api/login" || pathname === "/api/signup") {
+    return handleAuth(req, res, pathname);
   }
 
   sendJson(res, 404, { error: "Route not found" });
