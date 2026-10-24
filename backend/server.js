@@ -1,57 +1,83 @@
 require("dotenv").config();
-const express = require("express");
+const http = require("http");
 const pool = require("./db");
 
-const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
-//animal routes
-const animalsRouter = require("./routes/animals");
-app.use("/api/animals", animalsRouter);
+// animal route
+const { handleAnimals } = require("./routes/animals");
 
-//enclosure routes
-const enclosuresRouter = require("./routes/enclosures");
-app.use("/api/enclosures", enclosuresRouter);
+// enclosure route
+const { handleEnclosures } = require("./routes/enclosures");
 
-//species routes
-const speciesRouter = require("./routes/species");
-app.use("/api/species", speciesRouter);
+// species route
+const { handleSpecies } = require("./routes/species");
 
-//shop routes
-const shopsRouter = require("./routes/shops");
-app.use("/api/shops", shopsRouter);
+// shops route
+const { handleShops } = require("./routes/shops");
 
-//product routes
-const productsRouter = require("./routes/products");
-app.use("/api/products", productsRouter);
+// products route
+const { handleProducts } = require("./routes/products");
 
-//attractions routes
-const attractionsRouter = require("./routes/attractions");
-app.use("/api/attractions", attractionsRouter);
+// attractions route
+const { handleAttractions } = require("./routes/attractions");
 
-//closures routes
-const closuresRouter = require("./routes/closures");
-app.use("/api/closures", closuresRouter);
+// closures route
+const { handleClosures } = require("./routes/closures");
 
-// check db connection
-app.get("/api/health", async (req, res) => {
-  try {
-    const connection = await pool.getConnection();
-    connection.release();
-    res.json({ message: "Database connected!" });
-  } catch (error) {
-    console.error("Database connection failed:", error.message);
-    res.status(500).json({ error: "Database connection failed" });
+function sendJson(res, statusCode, data) {
+  res.writeHead(statusCode, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(data));
+}
+
+const server = http.createServer(async (req, res) => {
+  const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
+  const pathname = url.pathname;
+
+  // GET /api/health
+  if (req.method === "GET" && pathname === "/api/health") {
+    try {
+      const connection = await pool.getConnection();
+      connection.release();
+      return sendJson(res, 200, { message: "Database connected!" });
+    } catch (error) {
+      console.error(error.message);
+      return sendJson(res, 500, { error: "Database connection failed" });
+    }
   }
+
+
+  if (pathname === "/api/animals" || pathname.startsWith("/api/animals/")) {
+    return handleAnimals(req, res, pathname);
+  }
+
+  if (pathname === "/api/enclosures" || pathname.startsWith("/api/enclosures/")) {
+    return handleEnclosures(req, res, pathname);
+  }
+  
+  if (pathname === "/api/species" || pathname.startsWith("/api/species/")) {
+    return handleSpecies(req, res, pathname);
+  }
+
+  if (pathname === "/api/shops" || pathname.startsWith("/api/shops/")) {
+    return handleShops(req, res, pathname);
+  }
+
+  if (pathname === "/api/products" || pathname.startsWith("/api/products/")) {
+    return handleProducts(req, res, pathname);
+  }
+
+  if (pathname === "/api/attractions" || pathname.startsWith("/api/attractions/")) {
+    return handleAttractions(req, res, pathname);
+  }
+
+  if (pathname === "/api/closures" || pathname.startsWith("/api/closures/")) {
+    return handleClosures(req, res, pathname);
+  }
+
+  sendJson(res, 404, { error: "Route not found" });
 });
 
-
-
-app.use((req, res) => {
-  res.status(404).json({ error: "Route not found" });
-});
-
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });

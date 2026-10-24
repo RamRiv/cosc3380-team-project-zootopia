@@ -1,100 +1,132 @@
-const express = require("express");
 const pool = require("../db");
 
-const router = express.Router();
+function sendJson(res, statusCode, data) {
+  res.writeHead(statusCode, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(data));
+}
 
-// GET /api/attractions
-router.get("/", async (req, res) => {
-  try {
-    const [rows] = await pool.query("SELECT * FROM attraction");
-    res.json(rows);
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ error: "Could not get attractions" });
-  }
-});
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk;
+    });
+    req.on("end", () => {
+      if (!body) {
+        resolve({});
+        return;
+      }
+      try {
+        resolve(JSON.parse(body));
+      } catch (error) {
+        reject(error);
+      }
+    });
+  });
+}
 
-// GET /api/attractions/:id
-router.get("/:id", async (req, res) => {
-  try {
-    const [rows] = await pool.query(
-      "SELECT * FROM attraction WHERE AttractionID = ?",
-      [req.params.id]
-    );
+async function handleAttractions(req, res, pathname) {
+  // /api/attractions or /api/attractions/1
+  const parts = pathname.split("/").filter(Boolean);
+  const id = parts[2];
 
-    if (rows.length === 0) {
-      return res.status(404).json({ error: "Attraction not found" });
+  // GET /api/attractions
+  if (req.method === "GET" && !id) {
+    try {
+      const [rows] = await pool.query("SELECT * FROM attraction");
+      return sendJson(res, 200, rows);
+    } catch (error) {
+      console.error(error.message);
+      return sendJson(res, 500, { error: "Could not get attractions" });
     }
-
-    res.json(rows[0]);
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ error: "Could not get attraction" });
-  }
-});
-
-// POST /api/attractions
-router.post("/", async (req, res) => {
-  const { Name, Type, Schedule, EnclosureID } = req.body;
-
-  if (!Name || !Type || !Schedule || !EnclosureID) {
-    return res.status(400).json({ error: "Missing required fields" });
   }
 
-  try {
-    const [result] = await pool.query(
-      `INSERT INTO attraction (Name, Type, Schedule, EnclosureID)
-       VALUES (?, ?, ?, ?)`,
-      [Name, Type, Schedule, EnclosureID]
-    );
+  // GET /api/attractions/:id
+  if (req.method === "GET" && id) {
+    try {
+      const [rows] = await pool.query(
+        "SELECT * FROM attraction WHERE AttractionID = ?",
+        [id]
+      );
 
-    res.status(201).json({ AttractionID: result.insertId });
-  } catch (error) {
-    console.error(error.message);
-    res.status(400).json({ error: error.message });
-  }
-});
+      if (rows.length === 0) {
+        return sendJson(res, 404, { error: "Attraction not found" });
+      }
 
-// PUT /api/attractions/:id
-router.put("/:id", async (req, res) => {
-  const { Name, Type, Schedule, EnclosureID } = req.body;
-
-  try {
-    const [result] = await pool.query(
-      `UPDATE attraction
-       SET Name = ?, Type = ?, Schedule = ?, EnclosureID = ?
-       WHERE AttractionID = ?`,
-      [Name, Type, Schedule, EnclosureID, req.params.id]
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: "Attraction not found" });
+      return sendJson(res, 200, rows[0]);
+    } catch (error) {
+      console.error(error.message);
+      return sendJson(res, 500, { error: "Could not get attraction" });
     }
-
-    res.json({ message: "Attraction updated" });
-  } catch (error) {
-    console.error(error.message);
-    res.status(400).json({ error: error.message });
   }
-});
 
-// DELETE /api/attractions/:id
-router.delete("/:id", async (req, res) => {
-  try {
-    const [result] = await pool.query(
-      "DELETE FROM attraction WHERE AttractionID = ?",
-      [req.params.id]
-    );
+  // POST /api/attractions
+  if (req.method === "POST" && !id) {
+    try {
+      const body = await readBody(req);
+      const { Name, Type, Schedule, EnclosureID } = body;
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: "Attraction not found" });
+      if (!Name || !Type || !Schedule || !EnclosureID) {
+        return sendJson(res, 400, { error: "Missing required fields" });
+      }
+
+      const [result] = await pool.query(
+        `INSERT INTO attraction (Name, Type, Schedule, EnclosureID)
+         VALUES (?, ?, ?, ?)`,
+        [Name, Type, Schedule, EnclosureID]
+      );
+
+      return sendJson(res, 201, { AttractionID: result.insertId });
+    } catch (error) {
+      console.error(error.message);
+      return sendJson(res, 400, { error: error.message });
     }
-
-    res.json({ message: "Attraction deleted" });
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ error: "Could not delete attraction" });
   }
-});
 
-module.exports = router;
+  // PUT /api/attractions/:id
+  if (req.method === "PUT" && id) {
+    try {
+      const body = await readBody(req);
+      const { Name, Type, Schedule, EnclosureID } = body;
+
+      const [result] = await pool.query(
+        `UPDATE attraction
+         SET Name = ?, Type = ?, Schedule = ?, EnclosureID = ?
+         WHERE AttractionID = ?`,
+        [Name, Type, Schedule, EnclosureID, id]
+      );
+
+      if (result.affectedRows === 0) {
+        return sendJson(res, 404, { error: "Attraction not found" });
+      }
+
+      return sendJson(res, 200, { message: "Attraction updated" });
+    } catch (error) {
+      console.error(error.message);
+      return sendJson(res, 400, { error: error.message });
+    }
+  }
+
+  // DELETE /api/attractions/:id
+  if (req.method === "DELETE" && id) {
+    try {
+      const [result] = await pool.query(
+        "DELETE FROM attraction WHERE AttractionID = ?",
+        [id]
+      );
+
+      if (result.affectedRows === 0) {
+        return sendJson(res, 404, { error: "Attraction not found" });
+      }
+
+      return sendJson(res, 200, { message: "Attraction deleted" });
+    } catch (error) {
+      console.error(error.message);
+      return sendJson(res, 500, { error: "Could not delete attraction" });
+    }
+  }
+
+  sendJson(res, 404, { error: "Route not found" });
+}
+
+module.exports = { handleAttractions };

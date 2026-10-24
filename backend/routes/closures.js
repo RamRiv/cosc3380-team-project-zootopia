@@ -1,116 +1,143 @@
-const express = require("express");
 const pool = require("../db");
+function sendJson(res, statusCode, data) {
+  res.writeHead(statusCode, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(data));
+}
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk;
+    });
+    req.on("end", () => {
+      if (!body) {
+        resolve({});
+        return;
+      }
+      try {
+        resolve(JSON.parse(body));
+      } catch (error) {
+        reject(error);
+      }
+    });
+  });
+}
 
-const router = express.Router();
 
-// GET /api/closures
-router.get("/", async (req, res) => {
-  try {
-    const [rows] = await pool.query("SELECT * FROM zooclosure");
-    res.json(rows);
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ error: "Could not get closures" });
-  }
-});
 
-// GET /api/closures/:id
-router.get("/:id", async (req, res) => {
-  try {
-    const [rows] = await pool.query(
-      "SELECT * FROM zooclosure WHERE ClosureID = ?",
-      [req.params.id]
-    );
+async function handleClosures(req, res, pathname) {
+  // /api/closures or /api/closures/1
+  const parts = pathname.split("/").filter(Boolean);
+  const id = parts[2];
 
-    if (rows.length === 0) {
-      return res.status(404).json({ error: "Closure not found" });
+
+
+  // GET /api/closures
+  if (req.method === "GET" && !id) {
+    try {
+      const [rows] = await pool.query("SELECT * FROM zooclosure");
+      return sendJson(res, 200, rows);
+    } catch (error) {
+      console.error(error.message);
+      return sendJson(res, 500, { error: "Could not get closures" });
     }
-
-    res.json(rows[0]);
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ error: "Could not get closure" });
-  }
-});
-
-// POST /api/closures
-router.post("/", async (req, res) => {
-  const { Date, Reason, Scope, EnclosureID } = req.body;
-
-  if (!Date || !Reason || !Scope) {
-    return res.status(400).json({ error: "Missing required fields" });
   }
 
-  if (Scope === "FullZoo" && EnclosureID != null) {
-    return res.status(400).json({ error: "FullZoo closure cannot have EnclosureID" });
-  }
 
-  if (Scope === "Enclosure" && EnclosureID == null) {
-    return res.status(400).json({ error: "Enclosure closure needs EnclosureID" });
-  }
-
-  try {
-    const [result] = await pool.query(
-      `INSERT INTO zooclosure (\`Date\`, Reason, Scope, EnclosureID)
-       VALUES (?, ?, ?, ?)`,
-      [Date, Reason, Scope, EnclosureID ?? null]
-    );
-
-    res.status(201).json({ ClosureID: result.insertId });
-  } catch (error) {
-    console.error(error.message);
-    res.status(400).json({ error: error.message });
-  }
-});
-
-// PUT /api/closures/:id
-router.put("/:id", async (req, res) => {
-  const { Date, Reason, Scope, EnclosureID } = req.body;
-
-  if (Scope === "FullZoo" && EnclosureID != null) {
-    return res.status(400).json({ error: "FullZoo closure cannot have EnclosureID" });
-  }
-
-  if (Scope === "Enclosure" && EnclosureID == null) {
-    return res.status(400).json({ error: "Enclosure closure needs EnclosureID" });
-  }
-
-  try {
-    const [result] = await pool.query(
-      `UPDATE zooclosure
-       SET \`Date\` = ?, Reason = ?, Scope = ?, EnclosureID = ?
-       WHERE ClosureID = ?`,
-      [Date, Reason, Scope, EnclosureID ?? null, req.params.id]
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: "Closure not found" });
+  // GET /api/closures/:id
+  if (req.method === "GET" && id) {
+    try {
+      const [rows] = await pool.query(
+        "SELECT * FROM zooclosure WHERE ClosureID = ?",
+        [id]
+      );
+      if (rows.length === 0) {
+        return sendJson(res, 404, { error: "Closure not found" });
+      }
+      return sendJson(res, 200, rows[0]);
+    } catch (error) {
+      console.error(error.message);
+      return sendJson(res, 500, { error: "Could not get closure" });
     }
-
-    res.json({ message: "Closure updated" });
-  } catch (error) {
-    console.error(error.message);
-    res.status(400).json({ error: error.message });
   }
-});
 
-// DELETE /api/closures/:id
-router.delete("/:id", async (req, res) => {
-  try {
-    const [result] = await pool.query(
-      "DELETE FROM zooclosure WHERE ClosureID = ?",
-      [req.params.id]
-    );
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: "Closure not found" });
+
+
+  // POST /api/closures
+
+  if (req.method === "POST" && !id) {
+    try {
+      const body = await readBody(req);
+      const { Date, Reason, Scope, EnclosureID } = body;
+      if (!Date || !Reason || !Scope) {
+        return sendJson(res, 400, { error: "Missing required fields" });
+      }
+      if (Scope === "FullZoo" && EnclosureID != null) {
+        return sendJson(res, 400, { error: "FullZoo closure cannot have EnclosureID" });
+      }
+      if (Scope === "Enclosure" && EnclosureID == null) {
+        return sendJson(res, 400, { error: "Enclosure closure needs EnclosureID" });
+      }
+      const [result] = await pool.query(
+        `INSERT INTO zooclosure (\`Date\`, Reason, Scope, EnclosureID)
+         VALUES (?, ?, ?, ?)`,
+        [Date, Reason, Scope, EnclosureID ?? null]
+      );
+      return sendJson(res, 201, { ClosureID: result.insertId });
+    } catch (error) {
+      console.error(error.message);
+      return sendJson(res, 400, { error: error.message });
     }
-
-    res.json({ message: "Closure deleted" });
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ error: "Could not delete closure" });
   }
-});
 
-module.exports = router;
+
+  // PUT /api/closures/:id
+  if (req.method === "PUT" && id) {
+    try {
+      const body = await readBody(req);
+      const { Date, Reason, Scope, EnclosureID } = body;
+      if (Scope === "FullZoo" && EnclosureID != null) {
+        return sendJson(res, 400, { error: "FullZoo closure cannot have EnclosureID" });
+      }
+      if (Scope === "Enclosure" && EnclosureID == null) {
+        return sendJson(res, 400, { error: "Enclosure closure needs EnclosureID" });
+      }
+
+
+      const [result] = await pool.query(
+        `UPDATE zooclosure
+         SET \`Date\` = ?, Reason = ?, Scope = ?, EnclosureID = ?
+         WHERE ClosureID = ?`,
+        [Date, Reason, Scope, EnclosureID ?? null, id]
+      );
+      if (result.affectedRows === 0) {
+        return sendJson(res, 404, { error: "Closure not found" });
+      }
+      return sendJson(res, 200, { message: "Closure updated" });
+    } catch (error) {
+      console.error(error.message);
+      return sendJson(res, 400, { error: error.message });
+    }
+  }
+
+
+  // DELETE /api/closures/:id
+  if (req.method === "DELETE" && id) {
+    try {
+      const [result] = await pool.query(
+        "DELETE FROM zooclosure WHERE ClosureID = ?",
+        [id]
+      );
+      if (result.affectedRows === 0) {
+        return sendJson(res, 404, { error: "Closure not found" });
+      }
+      return sendJson(res, 200, { message: "Closure deleted" });
+    } catch (error) {
+      console.error(error.message);
+      return sendJson(res, 500, { error: "Could not delete closure" });
+    }
+  }
+  sendJson(res, 404, { error: "Route not found" });
+}
+module.exports = { handleClosures };

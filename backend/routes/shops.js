@@ -1,99 +1,131 @@
-const express = require("express");
 const pool = require("../db");
 
-const router = express.Router();
+function sendJson(res, statusCode, data) {
+  res.writeHead(statusCode, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(data));
+}
 
-// GET /api/shops
-router.get("/", async (req, res) => {
-  try {
-    const [rows] = await pool.query("SELECT * FROM shop");
-    res.json(rows);
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ error: "Could not get shops" });
-  }
-});
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk;
+    });
+    req.on("end", () => {
+      if (!body) {
+        resolve({});
+        return;
+      }
+      try {
+        resolve(JSON.parse(body));
+      } catch (error) {
+        reject(error);
+      }
+    });
+  });
+}
 
-// GET /api/shops/:id
-router.get("/:id", async (req, res) => {
-  try {
-    const [rows] = await pool.query(
-      "SELECT * FROM shop WHERE ShopID = ?",
-      [req.params.id]
-    );
+async function handleShops(req, res, pathname) {
+  // /api/shops or /api/shops/1
+  const parts = pathname.split("/").filter(Boolean);
+  const id = parts[2];
 
-    if (rows.length === 0) {
-      return res.status(404).json({ error: "Shop not found" });
+  // GET /api/shops
+  if (req.method === "GET" && !id) {
+    try {
+      const [rows] = await pool.query("SELECT * FROM shop");
+      return sendJson(res, 200, rows);
+    } catch (error) {
+      console.error(error.message);
+      return sendJson(res, 500, { error: "Could not get shops" });
     }
-
-    res.json(rows[0]);
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ error: "Could not get shop" });
-  }
-});
-
-// POST /api/shops
-router.post("/", async (req, res) => {
-  const { Name, Location, ShopType } = req.body;
-
-  if (!Name || !Location || !ShopType) {
-    return res.status(400).json({ error: "Missing required fields" });
   }
 
-  try {
-    const [result] = await pool.query(
-      "INSERT INTO shop (Name, Location, ShopType) VALUES (?, ?, ?)",
-      [Name, Location, ShopType]
-    );
+  // GET /api/shops/:id
+  if (req.method === "GET" && id) {
+    try {
+      const [rows] = await pool.query(
+        "SELECT * FROM shop WHERE ShopID = ?",
+        [id]
+      );
 
-    res.status(201).json({ ShopID: result.insertId });
-  } catch (error) {
-    console.error(error.message);
-    res.status(400).json({ error: error.message });
-  }
-});
+      if (rows.length === 0) {
+        return sendJson(res, 404, { error: "Shop not found" });
+      }
 
-// PUT /api/shops/:id
-router.put("/:id", async (req, res) => {
-  const { Name, Location, ShopType } = req.body;
-
-  try {
-    const [result] = await pool.query(
-      `UPDATE shop
-       SET Name = ?, Location = ?, ShopType = ?
-       WHERE ShopID = ?`,
-      [Name, Location, ShopType, req.params.id]
-    );
-
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: "Shop not found" });
+      return sendJson(res, 200, rows[0]);
+    } catch (error) {
+      console.error(error.message);
+      return sendJson(res, 500, { error: "Could not get shop" });
     }
-
-    res.json({ message: "Shop updated" });
-  } catch (error) {
-    console.error(error.message);
-    res.status(400).json({ error: error.message });
   }
-});
 
-// DELETE /api/shops/:id
-router.delete("/:id", async (req, res) => {
-  try {
-    const [result] = await pool.query(
-      "DELETE FROM shop WHERE ShopID = ?",
-      [req.params.id]
-    );
+  // POST /api/shops
+  if (req.method === "POST" && !id) {
+    try {
+      const body = await readBody(req);
+      const { Name, Location, ShopType } = body;
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ error: "Shop not found" });
+      if (!Name || !Location || !ShopType) {
+        return sendJson(res, 400, { error: "Missing required fields" });
+      }
+
+      const [result] = await pool.query(
+        "INSERT INTO shop (Name, Location, ShopType) VALUES (?, ?, ?)",
+        [Name, Location, ShopType]
+      );
+
+      return sendJson(res, 201, { ShopID: result.insertId });
+    } catch (error) {
+      console.error(error.message);
+      return sendJson(res, 400, { error: error.message });
     }
-
-    res.json({ message: "Shop deleted" });
-  } catch (error) {
-    console.error(error.message);
-    res.status(500).json({ error: "Could not delete shop" });
   }
-});
 
-module.exports = router;
+  // PUT /api/shops/:id
+  if (req.method === "PUT" && id) {
+    try {
+      const body = await readBody(req);
+      const { Name, Location, ShopType } = body;
+
+      const [result] = await pool.query(
+        `UPDATE shop
+         SET Name = ?, Location = ?, ShopType = ?
+         WHERE ShopID = ?`,
+        [Name, Location, ShopType, id]
+      );
+
+      if (result.affectedRows === 0) {
+        return sendJson(res, 404, { error: "Shop not found" });
+      }
+
+      return sendJson(res, 200, { message: "Shop updated" });
+    } catch (error) {
+      console.error(error.message);
+      return sendJson(res, 400, { error: error.message });
+    }
+  }
+
+  // DELETE /api/shops/:id
+  if (req.method === "DELETE" && id) {
+    try {
+      const [result] = await pool.query(
+        "DELETE FROM shop WHERE ShopID = ?",
+        [id]
+      );
+
+      if (result.affectedRows === 0) {
+        return sendJson(res, 404, { error: "Shop not found" });
+      }
+
+      return sendJson(res, 200, { message: "Shop deleted" });
+    } catch (error) {
+      console.error(error.message);
+      return sendJson(res, 500, { error: "Could not delete shop" });
+    }
+  }
+
+  sendJson(res, 404, { error: "Route not found" });
+}
+
+module.exports = { handleShops };
