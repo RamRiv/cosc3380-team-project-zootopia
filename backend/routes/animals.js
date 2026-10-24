@@ -1,10 +1,9 @@
 const pool = require("../db");
 
-function sendJson(res,statusCode, data) {
-  res.writeHead(statusCode, {"Content-Type": "application/json"});
+function sendJson(res, statusCode, data) {
+  res.writeHead(statusCode, { "Content-Type": "application/json" });
   res.end(JSON.stringify(data));
 }
-
 
 function readBody(req) {
   return new Promise((resolve, reject) => {
@@ -27,23 +26,83 @@ function readBody(req) {
 }
 
 async function handleAnimals(req, res, pathname) {
-  // /api/animals or /api/animals/1
   const parts = pathname.split("/").filter(Boolean);
   const id = parts[2];
+  const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
 
+  // GET /api/animals/search?species=...&enclosureId=...&sex=...
+  if (req.method === "GET" && id === "search") {
+    const species = url.searchParams.get("species");
+    const enclosureId = url.searchParams.get("enclosureId");
+    const sex = url.searchParams.get("sex");
 
-
-   // GET /api/animals
-   if (req.method === "GET" && !id) {
     try {
-      const [rows] = await pool.query("SELECT * FROM animal");
+      let sql = `
+        SELECT
+          a.AnimalID,
+          a.Name AS AnimalName,
+          a.Sex,
+          a.DateOfBirth,
+          a.AcquisitionDate,
+          s.CommonName AS Species,
+          s.ConservationStatus,
+          e.Name AS Enclosure,
+          e.Status AS EnclosureStatus
+        FROM animal a
+        JOIN species s ON a.SpeciesID = s.SpeciesID
+        JOIN enclosure e ON a.EnclosureID = e.EnclosureID
+        WHERE 1 = 1
+      `;
+      const params = [];
+
+      if (species) {
+        sql += " AND s.CommonName LIKE ?";
+        params.push(`%${species}%`);
+      }
+
+      if (enclosureId) {
+        sql += " AND a.EnclosureID = ?";
+        params.push(enclosureId);
+      }
+
+      if (sex) {
+        sql += " AND a.Sex = ?";
+        params.push(sex);
+      }
+
+      sql += " ORDER BY a.Name";
+
+      const [rows] = await pool.query(sql, params);
+      return sendJson(res, 200, rows);
+    } catch (error) {
+      console.error(error.message);
+      return sendJson(res, 500, { error: "Could not search animals" });
+    }
+  }
+
+  // GET /api/animals
+  if (req.method === "GET" && !id) {
+    try {
+      const [rows] = await pool.query(`
+        SELECT
+          a.AnimalID,
+          a.Name AS AnimalName,
+          a.Sex,
+          a.DateOfBirth,
+          a.AcquisitionDate,
+          s.CommonName AS Species,
+          e.Name AS Enclosure
+        FROM animal a
+        JOIN species s ON a.SpeciesID = s.SpeciesID
+        JOIN enclosure e ON a.EnclosureID = e.EnclosureID
+        ORDER BY a.Name
+      `);
       return sendJson(res, 200, rows);
     } catch (error) {
       console.error(error.message);
       return sendJson(res, 500, { error: "Could not get animals" });
     }
   }
-
 
   // GET /api/animals/:id
   if (req.method === "GET" && id) {
@@ -61,7 +120,6 @@ async function handleAnimals(req, res, pathname) {
       return sendJson(res, 500, { error: "Could not get animal" });
     }
   }
-
 
   // POST /api/animals
   if (req.method === "POST" && !id) {
@@ -96,11 +154,9 @@ async function handleAnimals(req, res, pathname) {
         [Name, SpeciesID, EnclosureID, Sex, DateOfBirth || null, AcquisitionDate, id]
       );
 
-
       if (result.affectedRows === 0) {
         return sendJson(res, 404, { error: "Animal not found" });
       }
-
 
       return sendJson(res, 200, { message: "Animal updated" });
     } catch (error) {
@@ -109,9 +165,8 @@ async function handleAnimals(req, res, pathname) {
     }
   }
 
-
-   // DELETE /api/animals/:id
-   if (req.method === "DELETE" && id) {
+  // DELETE /api/animals/:id
+  if (req.method === "DELETE" && id) {
     try {
       const [result] = await pool.query(
         "DELETE FROM animal WHERE AnimalID = ?",
@@ -126,6 +181,8 @@ async function handleAnimals(req, res, pathname) {
       return sendJson(res, 500, { error: "Could not delete animal" });
     }
   }
+
   sendJson(res, 404, { error: "Route not found" });
 }
+
 module.exports = { handleAnimals };
