@@ -45,13 +45,13 @@ GROUP BY
   c.Email;
 
 -- Product sales (good for a report)
-CREATE VIEW v_product_sales AS
+CREATE OR REPLACE VIEW v_product_sales AS
 SELECT
   p.ProductID,
   p.Name,
   p.ShopID,
-  SUM(tp.Quantity) AS UnitsSold,
-  SUM(tp.Quantity * tp.UnitPrice) AS Revenue
+  IFNULL(SUM(tp.Quantity), 0) AS UnitsSold,
+  IFNULL(SUM(tp.Quantity * tp.UnitPrice), 0.00) AS Revenue
 FROM product p
 LEFT JOIN transactionproduct tp
   ON tp.ProductID = p.ProductID
@@ -61,13 +61,14 @@ GROUP BY
   p.ShopID;
 
 -- Animals vs capacity (good for a query)
-CREATE VIEW v_enclosure_occupancy AS
+CREATE OR REPLACE VIEW v_enclosure_occupancy AS
 SELECT
   e.EnclosureID,
-  e.Name,
+  e.Name AS EnclosureName,
   e.Capacity,
   COUNT(a.AnimalID) AS AnimalCount,
-  e.Capacity - COUNT(a.AnimalID) AS SpotsLeft
+  e.Capacity - COUNT(a.AnimalID) AS RemainingCapacity,
+  ROUND(COUNT(a.AnimalID) * 100.0 / NULLIF(e.Capacity, 0), 2) AS CapacityPercentage
 FROM enclosure e
 LEFT JOIN animal a
   ON a.EnclosureID = e.EnclosureID
