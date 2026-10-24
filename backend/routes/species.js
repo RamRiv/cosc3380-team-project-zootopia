@@ -30,6 +30,67 @@ async function handleSpecies(req, res, pathname) {
   const parts = pathname.split("/").filter(Boolean);
   const id = parts[2];
 
+  // GET /api/species/search?q=monkey
+if (req.method === "GET" && parts[2] === "search") {
+  try {
+    const url = new URL(
+      req.url,
+      `http://${req.headers.host || "localhost"}`
+    );
+
+    const searchTerm = url.searchParams.get("q");
+
+    if (!searchTerm || !searchTerm.trim()) {
+      return sendJson(res, 400, {
+        error: "Search term is required"
+      });
+    }
+
+    const term = `%${searchTerm.trim()}%`;
+
+    const [rows] = await pool.query(
+      `SELECT
+         s.SpeciesID,
+         s.CommonName,
+         s.ScientificName,
+         s.Diet,
+         s.ConservationStatus,
+         COUNT(DISTINCT a.AnimalID) AS AnimalCount,
+         GROUP_CONCAT(
+           DISTINCT e.Name
+           ORDER BY e.Name
+           SEPARATOR ', '
+         ) AS Enclosures
+       FROM species s
+       LEFT JOIN animal a
+         ON s.SpeciesID = a.SpeciesID
+       LEFT JOIN species_enclosure se
+         ON s.SpeciesID = se.SpeciesID
+       LEFT JOIN enclosure e
+         ON se.EnclosureID = e.EnclosureID
+       WHERE s.CommonName LIKE ?
+          OR s.ScientificName LIKE ?
+          OR s.Diet LIKE ?
+          OR s.ConservationStatus LIKE ?
+       GROUP BY
+         s.SpeciesID,
+         s.CommonName,
+         s.ScientificName,
+         s.Diet,
+         s.ConservationStatus
+       ORDER BY s.CommonName`,
+      [term, term, term, term]
+    );
+
+    return sendJson(res, 200, rows);
+  } catch (error) {
+    console.error(error.message);
+    return sendJson(res, 500, {
+      error: "Could not search species"
+    });
+  }
+}
+
   // GET /api/species
   if (req.method === "GET" && !id) {
     try {
