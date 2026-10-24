@@ -41,6 +41,48 @@ async function handleProducts(req, res, pathname) {
     }
   }
 
+
+  // GET /api/products/search?q=shirt
+  if (req.method === "GET" && parts[2] === "search") {
+    try {
+      const url = new URL(req.url,`http://${req.headers.host || "localhost"}`);
+      const searchTerm = url.searchParams.get("q");
+
+      if (!searchTerm || !searchTerm.trim()) {
+        return sendJson(res, 400, {
+          error: "Search term is required"
+        });
+      }
+
+      const term = `%${searchTerm.trim()}%`;
+
+      const [rows] = await pool.query(
+        `SELECT
+           p.ProductID,
+           p.Name AS ProductName,
+           p.Category,
+           p.Price,
+           p.QuantityInStock,
+           s.Name AS ShopName
+         FROM product p
+         JOIN shop s ON p.ShopID = s.ShopID
+         WHERE p.Name LIKE ?
+            OR p.Category LIKE ?
+            OR s.Name LIKE ?
+         ORDER BY p.Name`,
+        [term, term, term]
+      );
+
+      return sendJson(res, 200, rows);
+    } catch (error) {
+      console.error(error.message);
+      return sendJson(res, 500, {
+        error: "Could not search products"
+      });
+    }
+  }
+
+
   // GET /api/products/:id
   if (req.method === "GET" && id) {
     try {
