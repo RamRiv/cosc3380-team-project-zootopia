@@ -28,7 +28,7 @@ async function handleReports(req, res, pathname) {
     }
   }
 
-  // GET /api/reports/product_sales
+  // GET /api/reports/product-sales
   if (
     req.method === "GET" &&
     pathname === "/api/reports/product-sales"
@@ -44,6 +44,26 @@ async function handleReports(req, res, pathname) {
       console.error(error.message);
       return sendJson(res, 500, {
         error: "Could not get product sales report"
+      });
+    }
+  }
+
+  // GET /api/reports/customer-spending
+  if (
+    req.method === "GET" &&
+    pathname === "/api/reports/customer-spending"
+  ) {
+    try {
+      const [rows] = await pool.query(
+        `SELECT * FROM v_customer_spending
+        ORDER BY LifetimeSpend DESC`
+        );
+
+      return sendJson(res, 200, rows);
+    } catch (error) {
+      console.error(error.message);
+      return sendJson(res, 500, {
+        error: "Could not get customer spending report"
       });
     }
   }
