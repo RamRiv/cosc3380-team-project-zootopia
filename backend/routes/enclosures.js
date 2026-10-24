@@ -1,95 +1,132 @@
-const express = require("express");
 const pool = require("../db");
 
-const router = express.Router();
+function sendJson(res, statusCode, data) {
+  res.writeHead(statusCode, { "Content-Type": "application/json" });
+  res.end(JSON.stringify(data));
+}
 
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk;
+    });
+    req.on("end", () => {
+      if (!body) {
+        resolve({});
+        return;
+      }
+      try {
+        resolve(JSON.parse(body));
+      } catch (error) {
+        reject(error);
+      }
+    });
+  });
+}
 
-// GET /api/enclosures
-router.get("/", async (req, res) => {
+async function handleEnclosures(req, res, pathname) {
+  // /api/enclosures or /api/enclosures/1
+  const parts = pathname.split("/").filter(Boolean);
+  const id = parts[2];
+
+  // GET /api/enclosures
+  if (req.method === "GET" && !id) {
     try {
       const [rows] = await pool.query("SELECT * FROM enclosure");
-      res.json(rows);
+      return sendJson(res, 200, rows);
     } catch (error) {
       console.error(error.message);
-      res.status(500).json({ error: "Could not get enclosures" });
+      return sendJson(res, 500, { error: "Could not get enclosures" });
     }
-  });
+  }
 
-
-// GET /api/enclosures/:id
-router.get("/:id", async (req, res) => {
+  // GET /api/enclosures/:id
+  if (req.method === "GET" && id) {
     try {
       const [rows] = await pool.query(
         "SELECT * FROM enclosure WHERE EnclosureID = ?",
-        [req.params.id]
+        [id]
       );
+
       if (rows.length === 0) {
-        return res.status(404).json({ error: "Enclosure not found" });
+        return sendJson(res, 404, { error: "Enclosure not found" });
       }
-      res.json(rows[0]);
+
+      return sendJson(res, 200, rows[0]);
     } catch (error) {
       console.error(error.message);
-      res.status(500).json({ error: "Could not get enclosure" });
+      return sendJson(res, 500, { error: "Could not get enclosure" });
     }
-  });
-
+  }
 
   // POST /api/enclosures
-  router.post("/", async (req, res) => {
-    const { Name, HabitatType, Capacity, Location, Status } = req.body;
-    if (!Name || !HabitatType || !Capacity || !Location || !Status) {
-      return res.status(400).json({ error: "Missing required fields" });
-    }
+  if (req.method === "POST" && !id) {
     try {
+      const body = await readBody(req);
+      const { Name, HabitatType, Capacity, Location, Status } = body;
+
+      if (!Name || !HabitatType || !Capacity || !Location || !Status) {
+        return sendJson(res, 400, { error: "Missing required fields" });
+      }
+
       const [result] = await pool.query(
         `INSERT INTO enclosure (Name, HabitatType, Capacity, Location, Status)
          VALUES (?, ?, ?, ?, ?)`,
         [Name, HabitatType, Capacity, Location, Status]
       );
-      res.status(201).json({ EnclosureID: result.insertId });
+
+      return sendJson(res, 201, { EnclosureID: result.insertId });
     } catch (error) {
       console.error(error.message);
-      res.status(400).json({ error: error.message });
+      return sendJson(res, 400, { error: error.message });
     }
-  });
-
+  }
 
   // PUT /api/enclosures/:id
-  router.put("/:id", async (req, res) => {
-    const { Name, HabitatType, Capacity, Location, Status } = req.body;
+  if (req.method === "PUT" && id) {
     try {
+      const body = await readBody(req);
+      const { Name, HabitatType, Capacity, Location, Status } = body;
+
       const [result] = await pool.query(
         `UPDATE enclosure
          SET Name = ?, HabitatType = ?, Capacity = ?, Location = ?, Status = ?
          WHERE EnclosureID = ?`,
-        [Name, HabitatType, Capacity, Location, Status, req.params.id]
+        [Name, HabitatType, Capacity, Location, Status, id]
       );
+
       if (result.affectedRows === 0) {
-        return res.status(404).json({ error: "Enclosure not found" });
+        return sendJson(res, 404, { error: "Enclosure not found" });
       }
-      res.json({ message: "Enclosure updated" });
+
+      return sendJson(res, 200, { message: "Enclosure updated" });
     } catch (error) {
       console.error(error.message);
-      res.status(400).json({ error: error.message });
+      return sendJson(res, 400, { error: error.message });
     }
-  });
-
+  }
 
   // DELETE /api/enclosures/:id
-  router.delete("/:id", async (req, res) => {
+  if (req.method === "DELETE" && id) {
     try {
       const [result] = await pool.query(
         "DELETE FROM enclosure WHERE EnclosureID = ?",
-        [req.params.id]
+        [id]
       );
+
       if (result.affectedRows === 0) {
-        return res.status(404).json({ error: "Enclosure not found" });
+        return sendJson(res, 404, { error: "Enclosure not found" });
       }
-      res.json({ message: "Enclosure deleted" });
+
+      return sendJson(res, 200, { message: "Enclosure deleted" });
     } catch (error) {
       console.error(error.message);
-      res.status(500).json({ error: "Could not delete enclosure" });
+      return sendJson(res, 500, { error: "Could not delete enclosure" });
     }
-  });
+  }
 
-  module.exports = router;
+  sendJson(res, 404, { error: "Route not found" });
+}
+
+module.exports = { handleEnclosures };
