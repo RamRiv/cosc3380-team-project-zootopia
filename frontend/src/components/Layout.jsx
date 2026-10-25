@@ -39,13 +39,13 @@ function Layout() {
 
         <p className="nav-label">Queries</p>
         <NavLink to="/queries/animals">Find Animals</NavLink>
-        <NavLink to="/queries/purchases">Purchase History</NavLink>
-        <NavLink to="/queries/staff">Staff Directory</NavLink>
+        <NavLink to="/queries/species">Find Species</NavLink>
+        <NavLink to="/queries/products">Find Products</NavLink>
 
         <p className="nav-label">Reports</p>
-        <NavLink to="/reports/revenue">Revenue</NavLink>
-        <NavLink to="/reports/sales">Shop Sales</NavLink>
-        <NavLink to="/reports/occupancy">Occupancy</NavLink>
+        <NavLink to="/reports/occupancy">Enclosure Occupancy</NavLink>
+        <NavLink to="/reports/sales">Product Sales</NavLink>
+        <NavLink to="/reports/spending">Customer Spending</NavLink>
       </nav>
 
       <main className="content">

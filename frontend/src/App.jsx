@@ -8,6 +8,10 @@ import Signup from './pages/Signup.jsx'
 import Tickets from './pages/Tickets.jsx'
 import './App.css'
 import CustomerLogin from './pages/CustomerLogin.jsx'
+import Animals from './pages/Animals.jsx'
+import { OccupancyReport, ProductSalesReport, CustomerSpendingReport } from './pages/Reports.jsx'
+import { AnimalSearch, SpeciesSearch, ProductSearch } from './pages/Queries.jsx'
+import Products from './pages/Products.jsx'
 
 
 function App() {
@@ -23,6 +27,14 @@ function App() {
       {/* staff pages, need login, get the top bar + sidebar */}
       <Route element={<Layout />}>
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/animals" element={<Animals />} />
+        <Route path="/reports/occupancy" element={<OccupancyReport />} />
+        <Route path="/reports/sales" element={<ProductSalesReport />} />
+        <Route path="/reports/spending" element={<CustomerSpendingReport />} />
+        <Route path="/queries/animals" element={<AnimalSearch />} />
+        <Route path="/queries/species" element={<SpeciesSearch />} />
+        <Route path="/queries/products" element={<ProductSearch />} />
+        <Route path="/products" element={<Products />} />
         <Route path="*" element={<ComingSoon />} />
       </Route>
     </Routes>

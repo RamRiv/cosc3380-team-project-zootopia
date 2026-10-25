@@ -1,16 +1,15 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router'                    // CHANGED: added Link
-import { getCustomers, loginCustomer } from '../customerAuth.js'    // NEW
+import { Link, useNavigate } from 'react-router'
+import { loginCustomer } from '../customerAuth.js'
 
-// customer login. checks the fake customer accounts for now
-// later it'll check email/password with the backend
-function CustomerLogin() {                                           // CHANGED: name
-  const [email, setEmail] = useState('')                             // CHANGED: email, not username
+// customer login. checks email/password with the backend (/api/login)
+function CustomerLogin() {
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
 
     if (!email || !password) {
@@ -18,19 +17,32 @@ function CustomerLogin() {                                           // CHANGED:
       return
     }
 
-    // CHANGED: look through customers instead of TEST_USERS
-    const customer = getCustomers().find(
-      (c) => c.email === email && c.password === password
-    )
+    try {
+      // customers use their email as their username
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: email, password }),
+      })
+      const data = await response.json()
 
-    if (!customer) {
-      setError('Invalid email or password')
-      return
+      if (!response.ok) {
+        setError(data.error)
+        return
+      }
+
+      // staff have their own login page
+      if (data.role !== 'Customer') {
+        setError('This login is for customers only')
+        return
+      }
+
+      setError('')
+      loginCustomer(data)
+      navigate('/tickets')
+    } catch (err) {
+      setError('Could not connect to the server')
     }
-
-    setError('')
-    loginCustomer(customer)   // CHANGED: instead of localStorage.setItem('user', ...)
-    navigate('/tickets')      // CHANGED: go to tickets, not dashboard
   }
 
   return (
@@ -39,28 +51,19 @@ function CustomerLogin() {                                           // CHANGED:
         <h2>Customer Login</h2>
 
         <label>Email</label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        />
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
 
         <label>Password</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
+        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
 
         {error ? <p className="error">{error}</p> : null}
 
         <button type="submit">Log in</button>
 
-        {/* NEW: link to sign up */}
         <p>Don't have an account? <Link to="/signup">Sign up</Link></p>
       </form>
     </div>
   )
 }
 
-export default CustomerLogin                                         // CHANGED: name
+export default CustomerLogin

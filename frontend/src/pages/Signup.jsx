@@ -1,31 +1,22 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { getCustomers, addCustomer, loginCustomer } from '../customerAuth.js'
+import { loginCustomer } from '../customerAuth.js'
 
-// customer sign up. fields match the customer table
+// customer sign up. creates the account on the backend (/api/signup)
 function Signup() {
-  // one object for the whole form instead of 6 useStates
-  const [form, setForm] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    password: '',
-    confirm: '',
-  })
+  const [form, setForm] = useState({ email: '', password: '', confirm: '' })
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
-  // one handler for every box
-  // e.target.name tells us which box changed, so we update just that field
+  // one handler for every box, uses the input's name
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
 
-    if (!form.firstName || !form.lastName || !form.email || !form.phone || !form.password) {
+    if (!form.email || !form.password) {
       setError('Please fill in every field')
       return
     }
@@ -35,25 +26,27 @@ function Signup() {
       return
     }
 
-    // email has to be unique, same rule as the db
-    const taken = getCustomers().find((c) => c.email === form.email)
-    if (taken) {
-      setError('An account with that email already exists')
-      return
-    }
+    try {
+      const response = await fetch('/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: form.email, password: form.password }),
+      })
+      const data = await response.json()
 
-    // don't save "confirm", it's only for checking
-    const customer = {
-      firstName: form.firstName,
-      lastName: form.lastName,
-      email: form.email,
-      phone: form.phone,
-      password: form.password,
-    }
+      // backend checks if the email is already taken
+      if (!response.ok) {
+        setError(data.error)
+        return
+      }
 
-    addCustomer(customer)
-    loginCustomer(customer)
-    navigate('/tickets')
+      // signed up -> log them in right away
+      setError('')
+      loginCustomer(data)
+      navigate('/tickets')
+    } catch (err) {
+      setError('Could not connect to the server')
+    }
   }
 
   return (
@@ -61,17 +54,8 @@ function Signup() {
       <form className="login-box" onSubmit={handleSubmit}>
         <h2>Create an Account</h2>
 
-        <label>First name</label>
-        <input name="firstName" value={form.firstName} onChange={handleChange} />
-
-        <label>Last name</label>
-        <input name="lastName" value={form.lastName} onChange={handleChange} />
-
         <label>Email</label>
         <input name="email" type="email" value={form.email} onChange={handleChange} />
-
-        <label>Phone</label>
-        <input name="phone" value={form.phone} onChange={handleChange} />
 
         <label>Password</label>
         <input name="password" type="password" value={form.password} onChange={handleChange} />
