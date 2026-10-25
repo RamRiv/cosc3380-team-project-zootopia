@@ -31,6 +31,12 @@ const { handleAuth } = require("./routes/auth");
 // reports route
 const { handleReports } = require("./routes/reports");
 
+// checkout route
+const { handleCheckout } = require("./routes/checkout");
+
+// transactions route
+const { handleTransactions } = require("./routes/transactions");
+
 function sendJson(res, statusCode, data) {
   res.writeHead(statusCode, { "Content-Type": "application/json" });
   res.end(JSON.stringify(data));
@@ -87,6 +93,14 @@ const server = http.createServer(async (req, res) => {
 
   if (pathname === "/api/login" || pathname === "/api/signup") {
     return handleAuth(req, res, pathname);
+  }
+
+  if (pathname === "/api/checkout") {
+    return handleCheckout(req, res, pathname);
+  }
+
+  if (pathname === "/api/my/transactions") {
+    return handleTransactions(req, res, pathname);
   }
 
   sendJson(res, 404, { error: "Route not found" });

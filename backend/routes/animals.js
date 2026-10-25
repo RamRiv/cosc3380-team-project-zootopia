@@ -51,7 +51,9 @@ async function handleAnimals(req, res, pathname) {
         FROM animal a
         JOIN species s ON a.SpeciesID = s.SpeciesID
         JOIN enclosure e ON a.EnclosureID = e.EnclosureID
-        WHERE 1 = 1
+        WHERE a.IsDeleted = 0
+          AND s.IsDeleted = 0
+          AND e.IsDeleted = 0
       `;
       const params = [];
 
@@ -95,6 +97,9 @@ async function handleAnimals(req, res, pathname) {
         FROM animal a
         JOIN species s ON a.SpeciesID = s.SpeciesID
         JOIN enclosure e ON a.EnclosureID = e.EnclosureID
+        WHERE a.IsDeleted = 0
+          AND s.IsDeleted = 0
+          AND e.IsDeleted = 0
         ORDER BY a.Name
       `);
       return sendJson(res, 200, rows);
@@ -108,7 +113,7 @@ async function handleAnimals(req, res, pathname) {
   if (req.method === "GET" && id) {
     try {
       const [rows] = await pool.query(
-        "SELECT * FROM animal WHERE AnimalID = ?",
+        "SELECT * FROM animal WHERE AnimalID = ? AND IsDeleted = 0",
         [id]
       );
       if (rows.length === 0) {
@@ -150,7 +155,7 @@ async function handleAnimals(req, res, pathname) {
         `UPDATE animal
          SET Name = ?, SpeciesID = ?, EnclosureID = ?, Sex = ?,
              DateOfBirth = ?, AcquisitionDate = ?
-         WHERE AnimalID = ?`,
+         WHERE AnimalID = ? AND IsDeleted = 0`,
         [Name, SpeciesID, EnclosureID, Sex, DateOfBirth || null, AcquisitionDate, id]
       );
 
@@ -165,11 +170,11 @@ async function handleAnimals(req, res, pathname) {
     }
   }
 
-  // DELETE /api/animals/:id
+  // DELETE /api/animals/:id  (soft delete)
   if (req.method === "DELETE" && id) {
     try {
       const [result] = await pool.query(
-        "DELETE FROM animal WHERE AnimalID = ?",
+        "UPDATE animal SET IsDeleted = 1 WHERE AnimalID = ? AND IsDeleted = 0",
         [id]
       );
       if (result.affectedRows === 0) {

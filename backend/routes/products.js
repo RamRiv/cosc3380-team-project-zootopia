@@ -29,29 +29,15 @@ async function handleProducts(req, res, pathname) {
   // /api/products or /api/products/1
   const parts = pathname.split("/").filter(Boolean);
   const id = parts[2];
-
-  // GET /api/products
-  if (req.method === "GET" && !id) {
-    try {
-      const [rows] = await pool.query("SELECT * FROM product");
-      return sendJson(res, 200, rows);
-    } catch (error) {
-      console.error(error.message);
-      return sendJson(res, 500, { error: "Could not get products" });
-    }
-  }
-
+  const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
 
   // GET /api/products/search?q=shirt
-  if (req.method === "GET" && parts[2] === "search") {
+  if (req.method === "GET" && id === "search") {
     try {
-      const url = new URL(req.url,`http://${req.headers.host || "localhost"}`);
       const searchTerm = url.searchParams.get("q");
 
       if (!searchTerm || !searchTerm.trim()) {
-        return sendJson(res, 400, {
-          error: "Search term is required"
-        });
+        return sendJson(res, 400, { error: "Search term is required" });
       }
 
       const term = `%${searchTerm.trim()}%`;
@@ -66,9 +52,9 @@ async function handleProducts(req, res, pathname) {
            s.Name AS ShopName
          FROM product p
          JOIN shop s ON p.ShopID = s.ShopID
-         WHERE p.Name LIKE ?
-            OR p.Category LIKE ?
-            OR s.Name LIKE ?
+         WHERE p.IsDeleted = 0
+           AND s.IsDeleted = 0
+           AND (p.Name LIKE ? OR p.Category LIKE ? OR s.Name LIKE ?)
          ORDER BY p.Name`,
         [term, term, term]
       );
@@ -76,18 +62,28 @@ async function handleProducts(req, res, pathname) {
       return sendJson(res, 200, rows);
     } catch (error) {
       console.error(error.message);
-      return sendJson(res, 500, {
-        error: "Could not search products"
-      });
+      return sendJson(res, 500, { error: "Could not search products" });
     }
   }
 
+  // GET /api/products
+  if (req.method === "GET" && !id) {
+    try {
+      const [rows] = await pool.query(
+        "SELECT * FROM product WHERE IsDeleted = 0"
+      );
+      return sendJson(res, 200, rows);
+    } catch (error) {
+      console.error(error.message);
+      return sendJson(res, 500, { error: "Could not get products" });
+    }
+  }
 
   // GET /api/products/:id
   if (req.method === "GET" && id) {
     try {
       const [rows] = await pool.query(
-        "SELECT * FROM product WHERE ProductID = ?",
+        "SELECT * FROM product WHERE ProductID = ? AND IsDeleted = 0",
         [id]
       );
 
@@ -134,7 +130,7 @@ async function handleProducts(req, res, pathname) {
       const [result] = await pool.query(
         `UPDATE product
          SET Name = ?, Price = ?, Category = ?, QuantityInStock = ?, ShopID = ?
-         WHERE ProductID = ?`,
+         WHERE ProductID = ? AND IsDeleted = 0`,
         [Name, Price, Category, QuantityInStock, ShopID, id]
       );
 
@@ -149,11 +145,11 @@ async function handleProducts(req, res, pathname) {
     }
   }
 
-  // DELETE /api/products/:id
+  // DELETE /api/products/:id  (soft delete)
   if (req.method === "DELETE" && id) {
     try {
       const [result] = await pool.query(
-        "DELETE FROM product WHERE ProductID = ?",
+        "UPDATE product SET IsDeleted = 1 WHERE ProductID = ? AND IsDeleted = 0",
         [id]
       );
 

@@ -29,72 +29,67 @@ async function handleSpecies(req, res, pathname) {
   // /api/species or /api/species/1
   const parts = pathname.split("/").filter(Boolean);
   const id = parts[2];
+  const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
 
   // GET /api/species/search?q=monkey
-if (req.method === "GET" && parts[2] === "search") {
-  try {
-    const url = new URL(
-      req.url,
-      `http://${req.headers.host || "localhost"}`
-    );
+  if (req.method === "GET" && id === "search") {
+    try {
+      const searchTerm = url.searchParams.get("q");
 
-    const searchTerm = url.searchParams.get("q");
+      if (!searchTerm || !searchTerm.trim()) {
+        return sendJson(res, 400, { error: "Search term is required" });
+      }
 
-    if (!searchTerm || !searchTerm.trim()) {
-      return sendJson(res, 400, {
-        error: "Search term is required"
-      });
+      const term = `%${searchTerm.trim()}%`;
+
+      const [rows] = await pool.query(
+        `SELECT
+           s.SpeciesID,
+           s.CommonName,
+           s.ScientificName,
+           s.Diet,
+           s.ConservationStatus,
+           COUNT(DISTINCT a.AnimalID) AS AnimalCount,
+           GROUP_CONCAT(
+             DISTINCT e.Name
+             ORDER BY e.Name
+             SEPARATOR ', '
+           ) AS Enclosures
+         FROM species s
+         LEFT JOIN animal a
+           ON s.SpeciesID = a.SpeciesID AND a.IsDeleted = 0
+         LEFT JOIN species_enclosure se
+           ON s.SpeciesID = se.SpeciesID
+         LEFT JOIN enclosure e
+           ON se.EnclosureID = e.EnclosureID AND e.IsDeleted = 0
+         WHERE s.IsDeleted = 0
+           AND (s.CommonName LIKE ?
+            OR s.ScientificName LIKE ?
+            OR s.Diet LIKE ?
+            OR s.ConservationStatus LIKE ?)
+         GROUP BY
+           s.SpeciesID,
+           s.CommonName,
+           s.ScientificName,
+           s.Diet,
+           s.ConservationStatus
+         ORDER BY s.CommonName`,
+        [term, term, term, term]
+      );
+
+      return sendJson(res, 200, rows);
+    } catch (error) {
+      console.error(error.message);
+      return sendJson(res, 500, { error: "Could not search species" });
     }
-
-    const term = `%${searchTerm.trim()}%`;
-
-    const [rows] = await pool.query(
-      `SELECT
-         s.SpeciesID,
-         s.CommonName,
-         s.ScientificName,
-         s.Diet,
-         s.ConservationStatus,
-         COUNT(DISTINCT a.AnimalID) AS AnimalCount,
-         GROUP_CONCAT(
-           DISTINCT e.Name
-           ORDER BY e.Name
-           SEPARATOR ', '
-         ) AS Enclosures
-       FROM species s
-       LEFT JOIN animal a
-         ON s.SpeciesID = a.SpeciesID
-       LEFT JOIN species_enclosure se
-         ON s.SpeciesID = se.SpeciesID
-       LEFT JOIN enclosure e
-         ON se.EnclosureID = e.EnclosureID
-       WHERE s.CommonName LIKE ?
-          OR s.ScientificName LIKE ?
-          OR s.Diet LIKE ?
-          OR s.ConservationStatus LIKE ?
-       GROUP BY
-         s.SpeciesID,
-         s.CommonName,
-         s.ScientificName,
-         s.Diet,
-         s.ConservationStatus
-       ORDER BY s.CommonName`,
-      [term, term, term, term]
-    );
-
-    return sendJson(res, 200, rows);
-  } catch (error) {
-    console.error(error.message);
-    return sendJson(res, 500, {
-      error: "Could not search species"
-    });
   }
-}
 
   // GET /api/species
   if (req.method === "GET" && !id) {
     try {
-      const [rows] = await pool.query("SELECT * FROM species");
+      const [rows] = await pool.query(
+        "SELECT * FROM species WHERE IsDeleted = 0"
+      );
       return sendJson(res, 200, rows);
     } catch (error) {
       console.error(error.message);
@@ -106,7 +101,7 @@ if (req.method === "GET" && parts[2] === "search") {
   if (req.method === "GET" && id) {
     try {
       const [rows] = await pool.query(
-        "SELECT * FROM species WHERE SpeciesID = ?",
+        "SELECT * FROM species WHERE SpeciesID = ? AND IsDeleted = 0",
         [id]
       );
 
@@ -154,7 +149,7 @@ if (req.method === "GET" && parts[2] === "search") {
         `UPDATE species
          SET CommonName = ?, ScientificName = ?, Diet = ?,
              ConservationStatus = ?, AvgLifespan = ?
-         WHERE SpeciesID = ?`,
+         WHERE SpeciesID = ? AND IsDeleted = 0`,
         [CommonName, ScientificName, Diet, ConservationStatus, AvgLifespan || null, id]
       );
 
@@ -169,11 +164,11 @@ if (req.method === "GET" && parts[2] === "search") {
     }
   }
 
-  // DELETE /api/species/:id
+  // DELETE /api/species/:id  (soft delete)
   if (req.method === "DELETE" && id) {
     try {
       const [result] = await pool.query(
-        "DELETE FROM species WHERE SpeciesID = ?",
+        "UPDATE species SET IsDeleted = 1 WHERE SpeciesID = ? AND IsDeleted = 0",
         [id]
       );
 

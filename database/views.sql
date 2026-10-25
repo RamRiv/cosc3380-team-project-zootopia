@@ -1,5 +1,5 @@
 -- Views for final_zoo_db
--- Run after final_zoo_db.sql
+-- Run after final_zoo_db.sql (and seed if you want data in reports)
 
 USE final_zoo_db;
 
@@ -9,7 +9,7 @@ DROP VIEW IF EXISTS v_product_sales;
 DROP VIEW IF EXISTS v_enclosure_occupancy;
 DROP VIEW IF EXISTS v_low_stock;
 
--- Total for each sale: ticket + products
+-- Total for each sale: ticket + products (history — no IsDeleted on these tables)
 CREATE VIEW v_transaction_totals AS
 SELECT
   t.TransactionID,
@@ -30,11 +30,12 @@ GROUP BY
   t.PaymentType,
   tk.UnitPrice;
 
--- How much each customer has spent
+-- Lifetime spend (keep soft-deleted customers so old sales still show)
 CREATE VIEW v_customer_spending AS
 SELECT
   c.CustomerID,
   c.Email,
+  c.IsDeleted,
   COUNT(vt.TransactionID) AS TransactionCount,
   COALESCE(SUM(vt.TotalAmount), 0) AS LifetimeSpend
 FROM customer c
@@ -42,9 +43,10 @@ LEFT JOIN v_transaction_totals vt
   ON vt.CustomerID = c.CustomerID
 GROUP BY
   c.CustomerID,
-  c.Email;
+  c.Email,
+  c.IsDeleted;
 
--- Product sales (good for a report)
+-- Product sales (active products only in this catalog-style report)
 CREATE OR REPLACE VIEW v_product_sales AS
 SELECT
   p.ProductID,
@@ -55,12 +57,13 @@ SELECT
 FROM product p
 LEFT JOIN transactionproduct tp
   ON tp.ProductID = p.ProductID
+WHERE p.IsDeleted = 0
 GROUP BY
   p.ProductID,
   p.Name,
   p.ShopID;
 
--- Animals vs capacity (good for a query)
+-- Animals vs capacity (ignore soft-deleted enclosures and animals)
 CREATE OR REPLACE VIEW v_enclosure_occupancy AS
 SELECT
   e.EnclosureID,
@@ -72,8 +75,9 @@ SELECT
 FROM enclosure e
 LEFT JOIN animal a
   ON a.EnclosureID = e.EnclosureID
+ AND a.IsDeleted = 0
+WHERE e.IsDeleted = 0
 GROUP BY
   e.EnclosureID,
   e.Name,
   e.Capacity;
-
