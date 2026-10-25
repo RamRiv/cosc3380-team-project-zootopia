@@ -64,32 +64,47 @@ async function handleClosures(req, res, pathname) {
 
 
 
-  // POST /api/closures
+ // POST /api/closures
+if (req.method === "POST" && !id) {
+  try {
+    const body = await readBody(req);
+    const { Date, Reason, Scope, EnclosureID } = body;
 
-  if (req.method === "POST" && !id) {
-    try {
-      const body = await readBody(req);
-      const { Date, Reason, Scope, EnclosureID } = body;
-      if (!Date || !Reason || !Scope) {
-        return sendJson(res, 400, { error: "Missing required fields" });
-      }
-      if (Scope === "FullZoo" && EnclosureID != null) {
-        return sendJson(res, 400, { error: "FullZoo closure cannot have EnclosureID" });
-      }
-      if (Scope === "Enclosure" && EnclosureID == null) {
-        return sendJson(res, 400, { error: "Enclosure closure needs EnclosureID" });
-      }
-      const [result] = await pool.query(
-        `INSERT INTO zooclosure (\`Date\`, Reason, Scope, EnclosureID)
-         VALUES (?, ?, ?, ?)`,
-        [Date, Reason, Scope, EnclosureID ?? null]
-      );
-      return sendJson(res, 201, { ClosureID: result.insertId });
-    } catch (error) {
-      console.error(error.message);
-      return sendJson(res, 400, { error: error.message });
+    if (!Date || !Reason || !Scope) {
+      return sendJson(res, 400, { error: "Missing required fields" });
     }
+    if (Scope === "FullZoo" && EnclosureID != null) {
+      return sendJson(res, 400, { error: "FullZoo closure cannot have EnclosureID" });
+    }
+    if (Scope === "Enclosure" && EnclosureID == null) {
+      return sendJson(res, 400, { error: "Enclosure closure needs EnclosureID" });
+    }
+
+    // save the closure history row
+    const [result] = await pool.query(
+      `INSERT INTO zooclosure (\`Date\`, Reason, Scope, EnclosureID)
+       VALUES (?, ?, ?, ?)`,
+      [Date, Reason, Scope, EnclosureID ?? null]
+    );
+
+    // also update live enclosure Status
+    if (Scope === "FullZoo") {
+      await pool.query(
+        "UPDATE enclosure SET Status = 'Closed' WHERE IsDeleted = 0"
+      );
+    } else if (Scope === "Enclosure") {
+      await pool.query(
+        "UPDATE enclosure SET Status = 'Closed' WHERE EnclosureID = ? AND IsDeleted = 0",
+        [EnclosureID]
+      );
+    }
+
+    return sendJson(res, 201, { ClosureID: result.insertId });
+  } catch (error) {
+    console.error(error.message);
+    return sendJson(res, 400, { error: error.message });
   }
+}
 
 
   // PUT /api/closures/:id

@@ -33,7 +33,9 @@ async function handleAttractions(req, res, pathname) {
   // GET /api/attractions
   if (req.method === "GET" && !id) {
     try {
-      const [rows] = await pool.query("SELECT * FROM attraction");
+      const [rows] = await pool.query(
+        "SELECT * FROM attraction WHERE IsDeleted = 0"
+      );
       return sendJson(res, 200, rows);
     } catch (error) {
       console.error(error.message);
@@ -45,7 +47,7 @@ async function handleAttractions(req, res, pathname) {
   if (req.method === "GET" && id) {
     try {
       const [rows] = await pool.query(
-        "SELECT * FROM attraction WHERE AttractionID = ?",
+        "SELECT * FROM attraction WHERE AttractionID = ? AND IsDeleted = 0",
         [id]
       );
 
@@ -92,7 +94,7 @@ async function handleAttractions(req, res, pathname) {
       const [result] = await pool.query(
         `UPDATE attraction
          SET Name = ?, Type = ?, Schedule = ?, EnclosureID = ?
-         WHERE AttractionID = ?`,
+         WHERE AttractionID = ? AND IsDeleted = 0`,
         [Name, Type, Schedule, EnclosureID, id]
       );
 
@@ -107,11 +109,11 @@ async function handleAttractions(req, res, pathname) {
     }
   }
 
-  // DELETE /api/attractions/:id
+  // DELETE /api/attractions/:id  (soft delete)
   if (req.method === "DELETE" && id) {
     try {
       const [result] = await pool.query(
-        "DELETE FROM attraction WHERE AttractionID = ?",
+        "UPDATE attraction SET IsDeleted = 1 WHERE AttractionID = ? AND IsDeleted = 0",
         [id]
       );
 

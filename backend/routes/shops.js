@@ -33,7 +33,9 @@ async function handleShops(req, res, pathname) {
   // GET /api/shops
   if (req.method === "GET" && !id) {
     try {
-      const [rows] = await pool.query("SELECT * FROM shop");
+      const [rows] = await pool.query(
+        "SELECT * FROM shop WHERE IsDeleted = 0"
+      );
       return sendJson(res, 200, rows);
     } catch (error) {
       console.error(error.message);
@@ -45,7 +47,7 @@ async function handleShops(req, res, pathname) {
   if (req.method === "GET" && id) {
     try {
       const [rows] = await pool.query(
-        "SELECT * FROM shop WHERE ShopID = ?",
+        "SELECT * FROM shop WHERE ShopID = ? AND IsDeleted = 0",
         [id]
       );
 
@@ -91,7 +93,7 @@ async function handleShops(req, res, pathname) {
       const [result] = await pool.query(
         `UPDATE shop
          SET Name = ?, Location = ?, ShopType = ?
-         WHERE ShopID = ?`,
+         WHERE ShopID = ? AND IsDeleted = 0`,
         [Name, Location, ShopType, id]
       );
 
@@ -106,17 +108,23 @@ async function handleShops(req, res, pathname) {
     }
   }
 
-  // DELETE /api/shops/:id
+  // DELETE /api/shops/:id  (soft delete + cascade products)
   if (req.method === "DELETE" && id) {
     try {
       const [result] = await pool.query(
-        "DELETE FROM shop WHERE ShopID = ?",
+        "UPDATE shop SET IsDeleted = 1 WHERE ShopID = ? AND IsDeleted = 0",
         [id]
       );
 
       if (result.affectedRows === 0) {
         return sendJson(res, 404, { error: "Shop not found" });
       }
+
+      // also hide products in this shop
+      await pool.query(
+        "UPDATE product SET IsDeleted = 1 WHERE ShopID = ? AND IsDeleted = 0",
+        [id]
+      );
 
       return sendJson(res, 200, { message: "Shop deleted" });
     } catch (error) {

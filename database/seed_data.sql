@@ -69,14 +69,14 @@ INSERT INTO employee (EmployeeID, FirstName, LastName, HireDate, PhoneNumber, Em
 INSERT INTO employee_shop (EmployeeID, ShopID) VALUES
 (3, 1);
 
--- customers: Username = their email
 -- staff: short Username; work email stays on employee
+-- customers: Username is separate from customer.Email
 INSERT INTO users (UserID, Username, Password, Role, EmployeeID, CustomerID) VALUES
 (1, 'morgan', 'pass123', 'Manager', 1, NULL),
 (2, 'alex', 'pass123', 'Zookeeper', 2, NULL),
 (3, 'quinn', 'pass123', 'Cashier', 3, NULL),
-(4, 'ava@email.com', 'pass123', 'Customer', NULL, 1),
-(5, 'jordan@email.com', 'pass123', 'Customer', NULL, 2);
+(4, 'ava', 'pass123', 'Customer', NULL, 1),
+(5, 'jordan', 'pass123', 'Customer', NULL, 2);
 
 INSERT INTO `transaction` (TransactionID, CustomerID, Date, PaymentType) VALUES
 (1, 1, '2026-10-20 10:15:00', 'Card'),

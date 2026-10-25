@@ -33,7 +33,9 @@ async function handleEnclosures(req, res, pathname) {
   // GET /api/enclosures
   if (req.method === "GET" && !id) {
     try {
-      const [rows] = await pool.query("SELECT * FROM enclosure");
+      const [rows] = await pool.query(
+        "SELECT * FROM enclosure WHERE IsDeleted = 0"
+      );
       return sendJson(res, 200, rows);
     } catch (error) {
       console.error(error.message);
@@ -45,7 +47,7 @@ async function handleEnclosures(req, res, pathname) {
   if (req.method === "GET" && id) {
     try {
       const [rows] = await pool.query(
-        "SELECT * FROM enclosure WHERE EnclosureID = ?",
+        "SELECT * FROM enclosure WHERE EnclosureID = ? AND IsDeleted = 0",
         [id]
       );
 
@@ -59,6 +61,24 @@ async function handleEnclosures(req, res, pathname) {
       return sendJson(res, 500, { error: "Could not get enclosure" });
     }
   }
+
+  // POST /api/enclosures/reopen-all
+if (req.method === "POST" && id === "reopen-all") {
+  try {
+    const [result] = await pool.query(
+      "UPDATE enclosure SET Status = 'Open' WHERE IsDeleted = 0"
+    );
+
+    return sendJson(res, 200, {
+      message: "All enclosures reopened",
+      updated: result.affectedRows
+    });
+  } catch (error) {
+    console.error(error.message);
+    return sendJson(res, 500, { error: "Could not reopen enclosures" });
+  }
+}
+
 
   // POST /api/enclosures
   if (req.method === "POST" && !id) {
@@ -92,7 +112,7 @@ async function handleEnclosures(req, res, pathname) {
       const [result] = await pool.query(
         `UPDATE enclosure
          SET Name = ?, HabitatType = ?, Capacity = ?, Location = ?, Status = ?
-         WHERE EnclosureID = ?`,
+         WHERE EnclosureID = ? AND IsDeleted = 0`,
         [Name, HabitatType, Capacity, Location, Status, id]
       );
 
@@ -107,17 +127,23 @@ async function handleEnclosures(req, res, pathname) {
     }
   }
 
-  // DELETE /api/enclosures/:id
+  // DELETE /api/enclosures/:id  (soft delete + cascade it to attractions)
   if (req.method === "DELETE" && id) {
     try {
       const [result] = await pool.query(
-        "DELETE FROM enclosure WHERE EnclosureID = ?",
+        "UPDATE enclosure SET IsDeleted = 1 WHERE EnclosureID = ? AND IsDeleted = 0",
         [id]
       );
 
       if (result.affectedRows === 0) {
         return sendJson(res, 404, { error: "Enclosure not found" });
       }
+
+      // also hide attractions that belonged to this enclosure
+      await pool.query(
+        "UPDATE attraction SET IsDeleted = 1 WHERE EnclosureID = ? AND IsDeleted = 0",
+        [id]
+      );
 
       return sendJson(res, 200, { message: "Enclosure deleted" });
     } catch (error) {

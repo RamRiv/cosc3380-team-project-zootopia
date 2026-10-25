@@ -5,7 +5,7 @@ USE `final_zoo_db`;
 -- Host: 127.0.0.1    Database: final_zoo_db
 -- ------------------------------------------------------
 -- Server version	8.0.46
--- Final schema: Users login, 1 Ticket per Transaction, Employee_Shop
+-- Final schema: Users login, 1 Ticket per Transaction, Employee_Shop, soft delete (IsDeleted)
 
 /*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
 /*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
@@ -33,11 +33,13 @@ CREATE TABLE `animal` (
   `Sex` varchar(10) NOT NULL,
   `DateOfBirth` date DEFAULT NULL,
   `AcquisitionDate` date NOT NULL,
+  `IsDeleted` tinyint NOT NULL DEFAULT 0,
   PRIMARY KEY (`AnimalID`),
   KEY `SpeciesID` (`SpeciesID`),
   KEY `EnclosureID` (`EnclosureID`),
   CONSTRAINT `animal_ibfk_1` FOREIGN KEY (`SpeciesID`) REFERENCES `species` (`SpeciesID`),
-  CONSTRAINT `animal_ibfk_2` FOREIGN KEY (`EnclosureID`) REFERENCES `enclosure` (`EnclosureID`)
+  CONSTRAINT `animal_ibfk_2` FOREIGN KEY (`EnclosureID`) REFERENCES `enclosure` (`EnclosureID`),
+  CONSTRAINT `animal_chk_deleted` CHECK ((`IsDeleted` IN (0,1)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -59,9 +61,11 @@ CREATE TABLE `attraction` (
   `Type` varchar(50) NOT NULL,
   `Schedule` datetime NOT NULL,
   `EnclosureID` int NOT NULL,
+  `IsDeleted` tinyint NOT NULL DEFAULT 0,
   PRIMARY KEY (`AttractionID`),
   KEY `EnclosureID` (`EnclosureID`),
-  CONSTRAINT `attraction_ibfk_1` FOREIGN KEY (`EnclosureID`) REFERENCES `enclosure` (`EnclosureID`)
+  CONSTRAINT `attraction_ibfk_1` FOREIGN KEY (`EnclosureID`) REFERENCES `enclosure` (`EnclosureID`),
+  CONSTRAINT `attraction_chk_deleted` CHECK ((`IsDeleted` IN (0,1)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -80,8 +84,10 @@ DROP TABLE IF EXISTS `customer`;
 CREATE TABLE `customer` (
   `CustomerID` int NOT NULL AUTO_INCREMENT,
   `Email` varchar(100) NOT NULL,
+  `IsDeleted` tinyint NOT NULL DEFAULT 0,
   PRIMARY KEY (`CustomerID`),
-  UNIQUE KEY `Email` (`Email`)
+  UNIQUE KEY `Email` (`Email`),
+  CONSTRAINT `customer_chk_deleted` CHECK ((`IsDeleted` IN (0,1)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -107,6 +113,7 @@ CREATE TABLE `employee` (
   `Salary` decimal(10,2) NOT NULL,
   `SupervisorID` int DEFAULT NULL,
   `EnclosureID` int DEFAULT NULL,
+  `IsDeleted` tinyint NOT NULL DEFAULT 0,
   PRIMARY KEY (`EmployeeID`),
   UNIQUE KEY `PhoneNumber` (`PhoneNumber`),
   UNIQUE KEY `EmailAddress` (`EmailAddress`),
@@ -114,7 +121,8 @@ CREATE TABLE `employee` (
   KEY `EnclosureID` (`EnclosureID`),
   CONSTRAINT `employee_ibfk_1` FOREIGN KEY (`SupervisorID`) REFERENCES `employee` (`EmployeeID`),
   CONSTRAINT `employee_ibfk_2` FOREIGN KEY (`EnclosureID`) REFERENCES `enclosure` (`EnclosureID`),
-  CONSTRAINT `employee_chk_1` CHECK ((`Salary` > 0))
+  CONSTRAINT `employee_chk_1` CHECK ((`Salary` > 0)),
+  CONSTRAINT `employee_chk_deleted` CHECK ((`IsDeleted` IN (0,1)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -159,9 +167,11 @@ CREATE TABLE `enclosure` (
   `Capacity` int NOT NULL,
   `Location` varchar(100) NOT NULL,
   `Status` varchar(20) NOT NULL,
+  `IsDeleted` tinyint NOT NULL DEFAULT 0,
   PRIMARY KEY (`EnclosureID`),
   CONSTRAINT `enclosure_chk_1` CHECK ((`Capacity` > 0)),
-  CONSTRAINT `enclosure_chk_2` CHECK ((`Status` IN ('Open','Closed')))
+  CONSTRAINT `enclosure_chk_2` CHECK ((`Status` IN ('Open','Closed'))),
+  CONSTRAINT `enclosure_chk_deleted` CHECK ((`IsDeleted` IN (0,1)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -184,11 +194,13 @@ CREATE TABLE `product` (
   `Category` varchar(50) NOT NULL,
   `QuantityInStock` int NOT NULL,
   `ShopID` int NOT NULL,
+  `IsDeleted` tinyint NOT NULL DEFAULT 0,
   PRIMARY KEY (`ProductID`),
   KEY `ShopID` (`ShopID`),
   CONSTRAINT `product_ibfk_1` FOREIGN KEY (`ShopID`) REFERENCES `shop` (`ShopID`),
   CONSTRAINT `product_chk_1` CHECK ((`Price` >= 0)),
-  CONSTRAINT `product_chk_2` CHECK ((`QuantityInStock` >= 0))
+  CONSTRAINT `product_chk_2` CHECK ((`QuantityInStock` >= 0)),
+  CONSTRAINT `product_chk_deleted` CHECK ((`IsDeleted` IN (0,1)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -209,8 +221,10 @@ CREATE TABLE `shop` (
   `Name` varchar(100) NOT NULL,
   `Location` varchar(100) NOT NULL,
   `ShopType` varchar(20) NOT NULL,
+  `IsDeleted` tinyint NOT NULL DEFAULT 0,
   PRIMARY KEY (`ShopID`),
-  CONSTRAINT `shop_chk_1` CHECK ((`ShopType` IN ('Gift','Food')))
+  CONSTRAINT `shop_chk_1` CHECK ((`ShopType` IN ('Gift','Food'))),
+  CONSTRAINT `shop_chk_deleted` CHECK ((`IsDeleted` IN (0,1)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -233,8 +247,10 @@ CREATE TABLE `species` (
   `Diet` varchar(50) NOT NULL,
   `ConservationStatus` varchar(50) NOT NULL,
   `AvgLifespan` int DEFAULT NULL,
+  `IsDeleted` tinyint NOT NULL DEFAULT 0,
   PRIMARY KEY (`SpeciesID`),
-  UNIQUE KEY `ScientificName` (`ScientificName`)
+  UNIQUE KEY `ScientificName` (`ScientificName`),
+  CONSTRAINT `species_chk_deleted` CHECK ((`IsDeleted` IN (0,1)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -353,6 +369,7 @@ CREATE TABLE `users` (
   `Role` varchar(20) NOT NULL,
   `EmployeeID` int DEFAULT NULL,
   `CustomerID` int DEFAULT NULL,
+  `IsDeleted` tinyint NOT NULL DEFAULT 0,
   PRIMARY KEY (`UserID`),
   UNIQUE KEY `Username` (`Username`),
   UNIQUE KEY `EmployeeID` (`EmployeeID`),
@@ -374,7 +391,8 @@ CREATE TABLE `users` (
       AND `EmployeeID` IS NOT NULL
       AND `CustomerID` IS NULL
     )
-  )
+  ),
+  CONSTRAINT `users_chk_deleted` CHECK ((`IsDeleted` IN (0,1)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -385,6 +403,7 @@ UNLOCK TABLES;
 
 --
 -- Table structure for table `zooclosure`
+-- (history log — no IsDeleted)
 --
 
 DROP TABLE IF EXISTS `zooclosure`;
@@ -429,4 +448,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-10-22
+-- Dump completed
