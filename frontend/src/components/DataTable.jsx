@@ -8,9 +8,10 @@ function DataTable({ columns, rows, rowKey, actions }) {
   }
 
   // what to show in one cell
-  function showValue(value, isDate) {
+  function showValue(value, col) {
     if (value == null) return '—'
-    if (isDate) return String(value).slice(0, 10) // 2012-11-11T06:00... -> 2012-11-11
+    if (col.isDate) return String(value).slice(0, 10) // 2012-11-11T06:00... -> 2012-11-11
+    if (col.isMoney) return '$' + Number(value).toFixed(2) // "37.98" -> $37.98
     return String(value)
   }
 
@@ -28,7 +29,7 @@ function DataTable({ columns, rows, rowKey, actions }) {
         {rows.map((row) => (
           <tr key={row[rowKey]}>
             {columns.map((col) => (
-              <td key={col.key}>{showValue(row[col.key], col.isDate)}</td>
+              <td key={col.key}>{showValue(row[col.key], col)}</td>
             ))}
             {actions ? <td>{actions(row)}</td> : null}
           </tr>

@@ -9,6 +9,7 @@ import Tickets from './pages/Tickets.jsx'
 import './App.css'
 import CustomerLogin from './pages/CustomerLogin.jsx'
 import Animals from './pages/Animals.jsx'
+import { OccupancyReport, ProductSalesReport, CustomerSpendingReport } from './pages/Reports.jsx'
 
 
 function App() {
@@ -25,6 +26,9 @@ function App() {
       <Route element={<Layout />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/animals" element={<Animals />} />
+        <Route path="/reports/occupancy" element={<OccupancyReport />} />
+        <Route path="/reports/sales" element={<ProductSalesReport />} />
+        <Route path="/reports/spending" element={<CustomerSpendingReport />} />
         <Route path="*" element={<ComingSoon />} />
       </Route>
     </Routes>

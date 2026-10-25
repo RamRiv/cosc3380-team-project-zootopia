@@ -43,9 +43,9 @@ function Layout() {
         <NavLink to="/queries/staff">Staff Directory</NavLink>
 
         <p className="nav-label">Reports</p>
-        <NavLink to="/reports/revenue">Revenue</NavLink>
-        <NavLink to="/reports/sales">Shop Sales</NavLink>
-        <NavLink to="/reports/occupancy">Occupancy</NavLink>
+        <NavLink to="/reports/occupancy">Enclosure Occupancy</NavLink>
+        <NavLink to="/reports/sales">Product Sales</NavLink>
+        <NavLink to="/reports/spending">Customer Spending</NavLink>
       </nav>
 
       <main className="content">
