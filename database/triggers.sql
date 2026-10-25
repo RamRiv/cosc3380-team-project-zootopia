@@ -33,7 +33,33 @@ BEGIN
   END IF;
 END$$
 
--- 2) Block product sale if not enough stock; otherwise decrease stock
+CREATE TRIGGER `trg_animal_enclosure_capacity_update`
+BEFORE UPDATE on `animal`
+FOR EACH ROW 
+BEGIN
+	DECLARE current_count INT;
+    DECLARE max_capacity INT;
+    
+    IF NEW.`EnclosureID` <> OLD.`EnclosureID` THEN
+    
+		SELECT `Capacity`
+		INTO max_capacity
+		FROM `enclosure`
+		WHERE `EnclosureID` = NEW.`EnclosureID`;
+        
+        SELECT COUNT(*)
+        INTO current_count
+        FROM `animal`
+        WHERE `EnclosureID` = NEW.`EnclosureID`;
+    
+		IF current_count >= max_capacity THEN
+			SIGNAL SQLSTATE '45000'
+				SET MESSAGE_TEXT = 'Enclosure is at capacity; cannot move animal.';
+		END IF;
+	END IF;
+END$$
+
+-- 3) Block product sale if not enough stock; otherwise decrease stock
 CREATE TRIGGER `trg_transactionproduct_stock`
 BEFORE INSERT ON `transactionproduct`
 FOR EACH ROW
