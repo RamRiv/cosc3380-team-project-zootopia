@@ -265,6 +265,11 @@ LOCK TABLES `species_enclosure` WRITE;
 /*!40000 ALTER TABLE `species_enclosure` ENABLE KEYS */;
 UNLOCK TABLES;
 
+-- Ensure animals can only be assigned to approved enclosures
+ALTER TABLE animal
+ADD CONSTRAINT fk_animal_species_enclosure
+FOREIGN KEY (SpeciesID, EnclosureID)
+REFERENCES species_enclosure (SpeciesID, EnclosureID);
 --
 -- Table structure for table `ticket`
 --
