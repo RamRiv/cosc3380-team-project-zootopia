@@ -178,3 +178,17 @@
 .data-table td button {
   margin-right: 6px;
 }
+
+/* search filters side by side */
+.search-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 16px;
+}
+.search-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
