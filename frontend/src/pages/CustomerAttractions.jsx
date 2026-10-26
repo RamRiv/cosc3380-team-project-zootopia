@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-// read-only: upcoming talks / shows and where they are
+// upcoming talks and shows (read only)
 function CustomerAttractions() {
   const [attractions, setAttractions] = useState([])
   const [enclosures, setEnclosures] = useState([])

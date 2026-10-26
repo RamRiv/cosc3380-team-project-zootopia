@@ -3,10 +3,6 @@ import { useNavigate } from 'react-router'
 
 // staff login. checks username/password with the backend (/api/login)
 
-
-
-
-
 function Login() {
   // what's typed in each box
   const [username, setUsername] = useState('')
@@ -15,10 +11,8 @@ function Login() {
   // error message to show, empty = no error
   const [error, setError] = useState('')
 
-  // lets us change pages from code
   const navigate = useNavigate()
 
-   // async = this function waits for the backend to answer
    async function handleSubmit(e) {
     e.preventDefault()
   
@@ -36,10 +30,8 @@ function Login() {
         body: JSON.stringify({ username: cleanUsername, password }),
       })
 
-      // turn the backend's answer into an object
       const data = await response.json()
 
-      // backend said no (wrong username or password)
       if (!response.ok) {
         setError(data.error)
         return

@@ -30,8 +30,8 @@ function Animals() {
   const [species, setSpecies] = useState([])
   const [enclosures, setEnclosures] = useState([])
   const [form, setForm] = useState(EMPTY_FORM)
-  const [editingId, setEditingId] = useState(null) // null = adding, a number = editing that animal
-  const [message, setMessage] = useState(null)     // { type: 'success' or 'error', text: '...' }
+  const [editingId, setEditingId] = useState(null) // null = adding
+  const [message, setMessage] = useState(null)
 
   // get the animal list from the backend
   async function loadAnimals() {
@@ -43,7 +43,7 @@ function Animals() {
     }
   }
 
-  // runs once when the page opens
+  // load everything when the page opens
   useEffect(() => {
     // options for the species + enclosure dropdowns
     async function loadDropdowns() {
@@ -55,9 +55,8 @@ function Animals() {
 
     loadAnimals()
     loadDropdowns()
-  }, []) // [] = only run once, not every redraw
+  }, [])
 
-  // one handler for every box, uses the input's name
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
@@ -83,7 +82,7 @@ function Animals() {
       })
       const data = await response.json()
 
-      // backend said no, like the enclosure capacity trigger
+      // error from the backend (like the capacity trigger)
       if (!response.ok) {
         setMessage({ type: 'error', text: data.error })
         return
@@ -98,10 +97,10 @@ function Animals() {
     }
   }
 
-  // fill the form with this animal so it can be changed
+  // put this animal in the form to edit it
   async function handleEdit(row) {
     try {
-      // the list doesn't have the species/enclosure IDs, so get the full animal
+      // list doesn't have species/enclosure IDs, so get the full row
       const response = await fetch('/api/animals/' + row.AnimalID)
       const animal = await response.json()
 
@@ -122,7 +121,6 @@ function Animals() {
   }
 
   async function handleDelete(row) {
-    // ask first so nobody deletes by accident
     if (!window.confirm('Delete ' + row.AnimalName + '?')) return
 
     try {
@@ -141,7 +139,6 @@ function Animals() {
     }
   }
 
-  // stop editing, go back to "add" mode
   function handleCancel() {
     setForm(EMPTY_FORM)
     setEditingId(null)
@@ -191,7 +188,6 @@ function Animals() {
 
         <div className="form-buttons">
           <button type="submit">{editingId ? 'Save changes' : 'Add animal'}</button>
-          {/* type="button" so Cancel doesn't submit the form */}
           {editingId ? <button type="button" onClick={handleCancel}>Cancel</button> : null}
         </div>
       </form>

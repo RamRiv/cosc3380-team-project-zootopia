@@ -1,5 +1,6 @@
 // zoo info used on more than one page
-// prices could come from the db later
+
+export const ZOO_NAME = 'City Zoo'
 
 export const TICKETS = [
   { type: 'Adult', price: 29.99 },

@@ -1,7 +1,7 @@
 import ReportPage from '../components/ReportPage.jsx'
 
-// the 3 reports. each one is just ReportPage with different settings
-// (the SQL for these is in database/views.sql)
+// the 3 reports, all use ReportPage
+// sql for these is in database/views.sql
 
 export function OccupancyReport() {
   return (

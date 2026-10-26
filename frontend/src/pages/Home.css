@@ -1,4 +1,4 @@
-/* keep everything in a centered column */
+
 .home {
   max-width: 1000px;
   margin: 0 auto;
@@ -48,7 +48,7 @@
   text-align: left;
 }
 
-/* animal cards side by side, wraps on small screens */
+/* animal cards */
 .animal-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));

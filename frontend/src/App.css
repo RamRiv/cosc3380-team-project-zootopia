@@ -1,4 +1,4 @@
-/* grid: top bar across the top, sidebar on the left, page on the right */
+/* top bar on top, sidebar left, page right */
 .layout {
   display: grid;
   grid-template-columns: 210px 1fr;
@@ -104,9 +104,24 @@
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
-/* gray background behind the box so it stands out */
+/* login pages */
 .login-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   background: #f3f4f1;
+}
+
+.login-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 300px;
+  background: white;
+  padding: 32px;
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
 .login-box input {

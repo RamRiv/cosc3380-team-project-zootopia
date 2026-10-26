@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react'
 import DataTable from './DataTable.jsx'
 
-// reusable report page: loads rows from a backend url and shows them in a table
-// title, description, url, columns, rowKey all come from whoever uses it
+// reusable report page: loads rows from a url and shows them in a table
 function ReportPage({ title, description, url, columns, rowKey }) {
   const [rows, setRows] = useState([])
   const [loading, setLoading] = useState(true)

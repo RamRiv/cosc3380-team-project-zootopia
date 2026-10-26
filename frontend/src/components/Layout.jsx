@@ -1,14 +1,15 @@
 import { NavLink, Outlet, useNavigate, Navigate } from 'react-router'
+import { ZOO_NAME } from '../zooInfo.js'
 
-// the frame every page sits in: top bar + sidebar
-// sidebar links depend on staff role (Cashier / Zookeeper / Manager)
+// staff frame: top bar + sidebar
+// sidebar links depend on role (Manager / Zookeeper / Cashier)
 function Layout() {
   const navigate = useNavigate()
 
-  // get who's logged in (turn the saved text back into an object)
+  // who's logged in
   const user = JSON.parse(localStorage.getItem('user'))
 
-  // nobody logged in -> send them to login
+  // not logged in -> staff login
   if (!user) {
     return <Navigate to="/login" replace />
   }
@@ -19,42 +20,29 @@ function Layout() {
   const isCashier = role === 'Cashier'
 
   function handleLogout() {
-    localStorage.removeItem('user') // forget who was logged in
+    localStorage.removeItem('user')
     navigate('/', { replace: true })
   }
 
   return (
     <div className="layout">
       <header className="topbar">
-        <span className="logo">Zoo Admin</span>
+        <span className="logo">{ZOO_NAME} Staff</span>
         <div className="user">
-          {/* who's logged in, saved by the login page */}
           <span>{user.username} ({user.role})</span>
           <button onClick={handleLogout}>Logout</button>
         </div>
       </header>
 
       <nav className="sidebar">
-        {/* everyone lands here after staff login */}
         <NavLink to="/dashboard">Dashboard</NavLink>
 
         {(isZookeeper || isManager) && (
           <NavLink to="/animals">Animals</NavLink>
         )}
 
-        {isManager && (
-          <>
-            <NavLink to="/employees">Employees</NavLink>
-            <NavLink to="/customers">Customers</NavLink>
-          </>
-        )}
-
         {(isCashier || isManager) && (
           <NavLink to="/products">Products</NavLink>
-        )}
-
-        {isManager && (
-          <NavLink to="/new-sale">New Sale</NavLink>
         )}
 
         <p className="nav-label">Queries</p>

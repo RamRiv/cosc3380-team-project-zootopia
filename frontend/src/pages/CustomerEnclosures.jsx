@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 
-// read-only: enclosures + which animals live in each (guest plaque view)
+// enclosures + the animals in each (read only)
 function CustomerEnclosures() {
   const [enclosures, setEnclosures] = useState([])
   const [animals, setAnimals] = useState([])

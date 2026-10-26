@@ -27,7 +27,6 @@ export function AnimalSearch() {
           name: 'enclosureId',
           label: 'Enclosure',
           type: 'select',
-          // turn each enclosure into a dropdown option
           options: enclosures.map((en) => ({ value: en.EnclosureID, label: en.Name })),
         },
         {

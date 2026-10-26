@@ -1,10 +1,8 @@
 import { useState } from 'react'
 import DataTable from './DataTable.jsx'
 
-// reusable search page: filter boxes on top, results table below
-// fields: the filter boxes, like [{ name: 'q', label: 'Search' }]
-//   add type: 'select' and options: [{ value, label }] to make it a dropdown
-// url: the backend search route. filters get added on as ?name=value
+// reusable search page: filters on top, results below
+// fields with type 'select' show up as a dropdown
 function QueryPage({ title, description, url, fields, columns, rowKey }) {
   // what's in each filter box, like { species: 'lion', sex: 'Male' }
   const [filters, setFilters] = useState({})
