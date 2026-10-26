@@ -9,7 +9,8 @@ export function getLoggedInCustomer() {
 // save who logged in, using what the backend sent back
 export function loginCustomer(data) {
   localStorage.setItem('customer', JSON.stringify({
-    email: data.username, // customers log in with their email
+    username: data.username,
+    email: data.email || null,
     customerId: data.customerId,
   }))
 }

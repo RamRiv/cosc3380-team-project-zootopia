@@ -19,20 +19,21 @@ function Login() {
   const navigate = useNavigate()
 
    // async = this function waits for the backend to answer
-  async function handleSubmit(e) {
+   async function handleSubmit(e) {
     e.preventDefault()
-
-    if (!username || !password) {
+  
+    const cleanUsername = username.trim()
+  
+    if (!cleanUsername || !password) {
       setError('Please fill in both fields')
       return
     }
-
+  
     try {
-      // send what they typed to the backend
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username: cleanUsername, password }),
       })
 
       // turn the backend's answer into an object

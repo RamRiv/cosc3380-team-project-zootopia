@@ -4,7 +4,7 @@ import { loginCustomer } from '../customerAuth.js'
 
 // customer sign up. creates the account on the backend (/api/signup)
 function Signup() {
-  const [form, setForm] = useState({ email: '', password: '', confirm: '' })
+  const [form, setForm] = useState({ username: '', email: '', password: '', confirm: '' })
   const [error, setError] = useState('')
   const navigate = useNavigate()
 
@@ -15,22 +15,29 @@ function Signup() {
 
   async function handleSubmit(e) {
     e.preventDefault()
-
-    if (!form.email || !form.password) {
+  
+    const cleanUsername = form.username.trim()
+    const cleanEmail = form.email.trim()
+  
+    if (!cleanUsername || !cleanEmail || !form.password) {
       setError('Please fill in every field')
       return
     }
-
+  
     if (form.password !== form.confirm) {
       setError('Passwords do not match')
       return
     }
-
+  
     try {
       const response = await fetch('/api/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: form.email, password: form.password }),
+        body: JSON.stringify({
+          username: cleanUsername,
+          email: cleanEmail,
+          password: form.password,
+        }),
       })
       const data = await response.json()
 
@@ -43,7 +50,7 @@ function Signup() {
       // signed up -> log them in right away
       setError('')
       loginCustomer(data)
-      navigate('/tickets')
+      navigate('/checkout')
     } catch (err) {
       setError('Could not connect to the server')
     }
@@ -53,6 +60,9 @@ function Signup() {
     <div className="login-page">
       <form className="login-box" onSubmit={handleSubmit}>
         <h2>Create an Account</h2>
+
+        <label>Username</label>
+        <input name="username" value={form.username} onChange={handleChange} />
 
         <label>Email</label>
         <input name="email" type="email" value={form.email} onChange={handleChange} />
