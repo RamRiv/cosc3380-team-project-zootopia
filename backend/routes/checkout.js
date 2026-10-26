@@ -31,14 +31,46 @@ function readBody(req) {
   });
 }
 
+// insert product lines — stock trigger runs on each INSERT
+async function insertProducts(connection, transactionId, productList) {
+  for (const item of productList) {
+    const productId = item.productId;
+    const quantity = item.quantity;
+
+    if (!productId || !quantity || quantity <= 0) {
+      const err = new Error("Each product needs productId and quantity > 0");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    const [productRows] = await connection.query(
+      "SELECT Price, IsDeleted FROM product WHERE ProductID = ?",
+      [productId]
+    );
+
+    if (productRows.length === 0 || productRows[0].IsDeleted === 1) {
+      const err = new Error("Product not found");
+      err.statusCode = 400;
+      throw err;
+    }
+
+    await connection.query(
+      `INSERT INTO transactionproduct (TransactionID, ProductID, Quantity, UnitPrice)
+       VALUES (?, ?, ?, ?)`,
+      [transactionId, productId, quantity, productRows[0].Price]
+    );
+  }
+}
+
 async function handleCheckout(req, res, pathname) {
-  // POST /api/checkout
+  // POST /api/checkout — ticket required, products optional (one transaction)
   if (req.method === "POST" && pathname === "/api/checkout") {
     let connection;
 
     try {
       const body = await readBody(req);
-      const { customerId, paymentType, ticketType, products } = body;
+      const { customerId, paymentType, ticketType } = body;
+      const productList = Array.isArray(body.products) ? body.products : [];
 
       if (!customerId || !paymentType || !ticketType) {
         return sendJson(res, 400, { error: "Missing required fields" });
@@ -51,12 +83,9 @@ async function handleCheckout(req, res, pathname) {
         });
       }
 
-      const productList = Array.isArray(products) ? products : [];
-
       connection = await pool.getConnection();
       await connection.beginTransaction();
 
-      // customer must exist and not be soft-deleted
       const [customerRows] = await connection.query(
         "SELECT CustomerID FROM customer WHERE CustomerID = ? AND IsDeleted = 0",
         [customerId]
@@ -79,39 +108,10 @@ async function handleCheckout(req, res, pathname) {
          VALUES (?, ?, ?)`,
         [transactionId, ticketType, ticketPrice]
       );
-      const ticketId = ticketResult.insertId;
 
-      for (const item of productList) {
-        const productId = item.productId;
-        const quantity = item.quantity;
-
-        if (!productId || !quantity || quantity <= 0) {
-          await connection.rollback();
-          connection.release();
-          return sendJson(res, 400, {
-            error: "Each product needs productId and quantity > 0"
-          });
-        }
-
-        // only sell products that are not soft-deleted
-        const [productRows] = await connection.query(
-          "SELECT Price FROM product WHERE ProductID = ? AND IsDeleted = 0",
-          [productId]
-        );
-
-        if (productRows.length === 0) {
-          await connection.rollback();
-          connection.release();
-          return sendJson(res, 400, { error: "Product not found" });
-        }
-
-        const unitPrice = productRows[0].Price;
-
-        await connection.query(
-          `INSERT INTO transactionproduct (TransactionID, ProductID, Quantity, UnitPrice)
-           VALUES (?, ?, ?, ?)`,
-          [transactionId, productId, quantity, unitPrice]
-        );
+      // products are optional — empty list is fine (ticket-only sale)
+      if (productList.length > 0) {
+        await insertProducts(connection, transactionId, productList);
       }
 
       await connection.commit();
@@ -119,10 +119,10 @@ async function handleCheckout(req, res, pathname) {
 
       return sendJson(res, 201, {
         transactionId,
-        ticketId,
+        ticketId: ticketResult.insertId,
         ticketType,
         ticketPrice,
-        message: "Checkout complete"
+        message: "Purchase complete"
       });
     } catch (error) {
       if (connection) {
@@ -134,7 +134,7 @@ async function handleCheckout(req, res, pathname) {
         }
       }
       console.error(error.message);
-      return sendJson(res, 400, { error: error.message });
+      return sendJson(res, error.statusCode || 400, { error: error.message });
     }
   }
 

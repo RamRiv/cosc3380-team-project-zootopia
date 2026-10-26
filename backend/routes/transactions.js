@@ -16,6 +16,7 @@ async function handleTransactions(req, res, pathname) {
         return sendJson(res, 400, { error: "customerId is required" });
       }
 
+      // LEFT JOIN ticket so product-only sales still show
       const [transactions] = await pool.query(
         `SELECT
            t.TransactionID,
@@ -27,7 +28,7 @@ async function handleTransactions(req, res, pathname) {
            tk.UnitPrice AS TicketPrice,
            COALESCE(vt.TotalAmount, 0) AS TotalAmount
          FROM \`transaction\` t
-         JOIN ticket tk
+         LEFT JOIN ticket tk
            ON tk.TransactionID = t.TransactionID
          LEFT JOIN v_transaction_totals vt
            ON vt.TransactionID = t.TransactionID
@@ -57,11 +58,13 @@ async function handleTransactions(req, res, pathname) {
           customerId: row.CustomerID,
           date: row.Date,
           paymentType: row.PaymentType,
-          ticket: {
-            ticketId: row.TicketID,
-            type: row.TicketType,
-            unitPrice: row.TicketPrice
-          },
+          ticket: row.TicketID
+            ? {
+                ticketId: row.TicketID,
+                type: row.TicketType,
+                unitPrice: row.TicketPrice
+              }
+            : null,
           products,
           totalAmount: row.TotalAmount
         });

@@ -30,14 +30,15 @@ async function handleAuth(req, res, pathname) {
   if (req.method === "POST" && pathname === "/api/login") {
     try {
       const body = await readBody(req);
-      const { username, password } = body;
+      const username = (body.username || "").trim();
+      const password = body.password;
 
       if (!username || !password) {
         return sendJson(res, 400, { error: "Username and password required" });
       }
 
       const [rows] = await pool.query(
-        `SELECT u.UserID, u.Username, u.Role, u.EmployeeID, u.CustomerID
+        `SELECT u.UserID, u.Username, u.Role, u.EmployeeID, u.CustomerID, c.Email
          FROM users u
          LEFT JOIN customer c ON u.CustomerID = c.CustomerID
          LEFT JOIN employee e ON u.EmployeeID = e.EmployeeID
@@ -56,6 +57,7 @@ async function handleAuth(req, res, pathname) {
       const user = rows[0];
       return sendJson(res, 200, {
         username: user.Username,
+        email: user.Email || null,
         role: user.Role,
         employeeId: user.EmployeeID,
         customerId: user.CustomerID
@@ -70,7 +72,9 @@ async function handleAuth(req, res, pathname) {
   if (req.method === "POST" && pathname === "/api/signup") {
     try {
       const body = await readBody(req);
-      const { username, email, password } = body;
+      const username = (body.username || "").trim();
+      const email = (body.email || "").trim();
+      const password = body.password;
 
       if (!username || !email || !password) {
         return sendJson(res, 400, { error: "Username, email, and password required" });
