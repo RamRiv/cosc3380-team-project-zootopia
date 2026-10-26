@@ -25,11 +25,12 @@ function Home() {
       <header className="home-header">
         <span className="home-logo">Zoo Name</span>
         <nav>
-          {/* # links jump to a section on this same page */}
-          <a href="#hours">Hours</a>
-          <a href="#tickets">Tickets</a>
-          <a href="#animals">Animals</a>
-          <Link to="/login">Staff Login</Link>
+        <a href="#hours">Hours</a>
+        <a href="#tickets">Tickets</a>
+        <a href="#animals">Animals</a>
+        <Link to="/customer-login">Customer Login</Link>
+        <Link to="/signup">Sign Up</Link>
+        <Link to="/login">Staff Login</Link>
         </nav>
       </header>
 
