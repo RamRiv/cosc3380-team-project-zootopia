@@ -33,56 +33,6 @@ function Dashboard() {
   return (
     <main className="dashboard">
       <h2>Zoo Dashboard</h2>
-      <p>View animal records stored in the zoo database.</p>
-
-      <section className="dashboard-card">
-        <div className="dashboard-card-header">
-          <h3>Animal Records</h3>
-          <button onClick={loadAnimals} disabled={loading}>
-            {loading ? 'Loading...' : 'Refresh'}
-          </button>
-        </div>
-
-        {loading && <p>Loading animal records...</p>}
-        {error && <p role="alert">{error}</p>}
-
-        {!loading && !error && (
-          <p>Total animals returned: {animals.length}</p>
-        )}
-
-        {!loading && !error && animals.length > 0 && (
-          <div className="table-container">
-            <table>
-              <thead>
-                <tr>
-                  {Object.keys(animals[0]).map((column) => (
-                    <th key={column} scope="col">
-                      {column}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {animals.map((animal, index) => (
-                  <tr key={animal.animalId ?? index}>
-                    {Object.keys(animals[0]).map((column) => (
-                      <td key={column}>
-                        {animal[column] == null
-                          ? '—'
-                          : String(animal[column])}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {!loading && !error && animals.length === 0 && (
-          <p>No animal records were found.</p>
-        )}
-      </section>
     </main>
   )
 }
