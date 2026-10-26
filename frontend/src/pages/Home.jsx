@@ -1,25 +1,33 @@
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import './Home.css'
+import { TICKETS } from '../zooInfo.js'
 
 // public front page, anyone can see this (no login)
-// info is hardcoded for now, prices could come from the db later
 
 const HOURS = [
   { days: 'Monday - Friday', time: '9am - 5pm' },
   { days: 'Saturday - Sunday', time: '9am - 6pm' },
 ]
 
-import { TICKETS } from '../zooInfo.js'
-
-//Hardcoded animal data for now, will come from the db later
-const ANIMALS = [
-  { name: 'Simba', species: 'African Lion' },
-  { name: 'Ellie', species: 'African Elephant' },
-  { name: 'Flip', species: 'Bottlenose Dolphin' },
-  { name: 'Mei', species: 'Giant Panda' },
-]
-
 function Home() {
+  const [animals, setAnimals] = useState([])
+
+  useEffect(() => {
+    async function loadAnimals() {
+      try {
+        const response = await fetch('/api/animals')
+        const data = await response.json()
+        if (response.ok) {
+          setAnimals(data)
+        }
+      } catch (err) {
+        // leave empty if the backend is down
+      }
+    }
+    loadAnimals()
+  }, [])
+
   return (
     <div className="home">
       <header className="home-header">
@@ -74,14 +82,18 @@ function Home() {
 
       <section id="animals" className="home-section">
         <h2>Meet Our Animals</h2>
-        <div className="animal-grid">
-          {ANIMALS.map((a) => (
-            <div key={a.name} className="animal-card">
-              <strong>{a.name}</strong>
-              <span>{a.species}</span>
-            </div>
-          ))}
-        </div>
+        {animals.length === 0 ? (
+          <p>No animals to show right now.</p>
+        ) : (
+          <div className="animal-grid">
+            {animals.map((a) => (
+              <div key={a.AnimalID} className="animal-card">
+                <strong>{a.AnimalName}</strong>
+                <span>{a.Species}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
 
       <footer className="home-footer">
