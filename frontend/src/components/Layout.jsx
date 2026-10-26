@@ -15,7 +15,7 @@ function Layout() {
 
   function handleLogout() {
     localStorage.removeItem('user') // forget who was logged in
-    navigate('/login')
+    navigate('/', { replace: true })
   }
 
   return (
