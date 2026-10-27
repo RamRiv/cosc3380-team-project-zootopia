@@ -1,8 +1,11 @@
 require("dotenv").config();
 const http = require("http");
+const fs = require("fs");
+const path = require("path");
 const pool = require("./db");
 
 const PORT = process.env.PORT || 3000;
+const DIST = path.join(__dirname, "..", "frontend", "dist");
 
 // animal route
 const { handleAnimals } = require("./routes/animals");
@@ -42,6 +45,54 @@ function sendJson(res, statusCode, data) {
   res.end(JSON.stringify(data));
 }
 
+function contentType(filePath) {
+  const ext = path.extname(filePath).toLowerCase();
+  const types = {
+    ".html": "text/html; charset=utf-8",
+    ".js": "text/javascript; charset=utf-8",
+    ".css": "text/css; charset=utf-8",
+    ".json": "application/json",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".jpeg": "image/jpeg",
+    ".svg": "image/svg+xml",
+    ".ico": "image/x-icon",
+    ".woff": "font/woff",
+    ".woff2": "font/woff2"
+  };
+  return types[ext] || "application/octet-stream";
+}
+
+// serve the Vite build (Azure). if dist is missing, API still works (local vite dev)
+function tryServeFrontend(res, pathname) {
+  if (!fs.existsSync(DIST)) {
+    return false;
+  }
+
+  const safePath = pathname === "/" ? "/index.html" : pathname;
+  let filePath = path.normalize(path.join(DIST, safePath));
+
+  if (!filePath.startsWith(DIST)) {
+    return false;
+  }
+
+  if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+    res.writeHead(200, { "Content-Type": contentType(filePath) });
+    fs.createReadStream(filePath).pipe(res);
+    return true;
+  }
+
+  // react router pages like /checkout
+  const indexPath = path.join(DIST, "index.html");
+  if (fs.existsSync(indexPath)) {
+    res.writeHead(200, { "Content-Type": contentType(indexPath) });
+    fs.createReadStream(indexPath).pipe(res);
+    return true;
+  }
+
+  return false;
+}
+
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || "localhost"}`);
   const pathname = url.pathname;
@@ -58,7 +109,6 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
-
   if (pathname === "/api/animals" || pathname.startsWith("/api/animals/")) {
     return handleAnimals(req, res, pathname);
   }
@@ -66,7 +116,7 @@ const server = http.createServer(async (req, res) => {
   if (pathname === "/api/enclosures" || pathname.startsWith("/api/enclosures/")) {
     return handleEnclosures(req, res, pathname);
   }
-  
+
   if (pathname === "/api/species" || pathname.startsWith("/api/species/")) {
     return handleSpecies(req, res, pathname);
   }
@@ -103,9 +153,16 @@ const server = http.createServer(async (req, res) => {
     return handleTransactions(req, res, pathname);
   }
 
+  if (
+    (req.method === "GET" || req.method === "HEAD") &&
+    tryServeFrontend(res, pathname)
+  ) {
+    return;
+  }
+
   sendJson(res, 404, { error: "Route not found" });
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`Server running at http://localhost:${PORT}`);
 });

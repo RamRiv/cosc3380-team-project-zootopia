@@ -1,1 +1,8 @@
-{}
+{
+  "name": "cosc3380-team-project-zootopia",
+  "private": true,
+  "scripts": {
+    "build": "npm install --prefix frontend && npm run build --prefix frontend",
+    "start": "npm start --prefix backend"
+  }
+}
