@@ -4,13 +4,13 @@
 USE `final_zoo_db`;
 
 DROP TRIGGER IF EXISTS `trg_animal_enclosure_capacity`;
+DROP TRIGGER IF EXISTS `trg_animal_enclosure_capacity_update`;
 DROP TRIGGER IF EXISTS `trg_lineitem_product_stock`;
 DROP TRIGGER IF EXISTS `trg_transactionproduct_stock`;
 
 DELIMITER $$
 
--- 1) Block adding an animal if the enclosure is at capacity
---    (only count animals that are not soft-deleted)
+-- block insert if enclosure is full (ignore soft-deleted animals)
 CREATE TRIGGER `trg_animal_enclosure_capacity`
 BEFORE INSERT ON `animal`
 FOR EACH ROW
@@ -41,7 +41,40 @@ BEGIN
   END IF;
 END$$
 
--- 2) Block product sale if deleted / not enough stock; otherwise decrease stock
+-- same check when moving an animal to a different enclosure
+CREATE TRIGGER `trg_animal_enclosure_capacity_update`
+BEFORE UPDATE ON `animal`
+FOR EACH ROW
+BEGIN
+  DECLARE current_count INT;
+  DECLARE max_capacity INT;
+
+  IF NEW.`EnclosureID` <> OLD.`EnclosureID` THEN
+    SELECT `Capacity`
+    INTO max_capacity
+    FROM `enclosure`
+    WHERE `EnclosureID` = NEW.`EnclosureID`
+      AND `IsDeleted` = 0;
+
+    IF max_capacity IS NULL THEN
+      SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Enclosure not found or is deleted.';
+    END IF;
+
+    SELECT COUNT(*)
+    INTO current_count
+    FROM `animal`
+    WHERE `EnclosureID` = NEW.`EnclosureID`
+      AND `IsDeleted` = 0;
+
+    IF current_count >= max_capacity THEN
+      SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Enclosure is at capacity; cannot add another animal.';
+    END IF;
+  END IF;
+END$$
+
+-- block product sale if deleted / not enough stock; otherwise decrease stock
 CREATE TRIGGER `trg_transactionproduct_stock`
 BEFORE INSERT ON `transactionproduct`
 FOR EACH ROW
