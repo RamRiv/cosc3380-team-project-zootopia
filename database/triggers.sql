@@ -159,25 +159,46 @@ BEGIN
   END IF;
 END$$
 
--- low stock alert for manager (threshold: 5)
 CREATE TRIGGER `trg_product_low_stock_alert`
 AFTER UPDATE ON `product`
 FOR EACH ROW
 BEGIN
-  IF NEW.`IsDeleted` = 0
-     AND NEW.`QuantityInStock` < 5
-     AND OLD.`QuantityInStock` >= 5 THEN
-    INSERT INTO `alert` (`AlertType`, `Message`, `ProductID`, `AnimalID`, `CreatedAt`, `IsRead`)
-    VALUES (
-      'LowStock',
-      CONCAT(NEW.`Name`, ' is low on stock (', NEW.`QuantityInStock`, ' left).'),
-      NEW.`ProductID`,
-      NULL,
-      NOW(),
-      0
-    );
+  IF NEW.`IsDeleted` = 0 AND OLD.`IsDeleted` = 0 THEN
+
+    -- Out of stock alert
+    IF NEW.`QuantityInStock` = 0
+       AND OLD.`QuantityInStock` > 0 THEN
+
+      INSERT INTO `alert`
+        (`AlertType`, `Message`, `ProductID`, `AnimalID`, `CreatedAt`, `IsRead`)
+      VALUES (
+        'LowStock',
+        CONCAT(NEW.`Name`, ' is OUT OF STOCK!'),
+        NEW.`ProductID`,
+        NULL,
+        NOW(),
+        0
+      );
+
+    -- Low stock alert (below 5)
+    ELSEIF NEW.`QuantityInStock` < 5
+       AND OLD.`QuantityInStock` >= 5 THEN
+
+      INSERT INTO `alert`
+        (`AlertType`, `Message`, `ProductID`, `AnimalID`, `CreatedAt`, `IsRead`)
+      VALUES (
+        'LowStock',
+        CONCAT(NEW.`Name`, ' is low on stock (', NEW.`QuantityInStock`, ' left).'),
+        NEW.`ProductID`,
+        NULL,
+        NOW(),
+        0
+      );
+
+    END IF;
   END IF;
 END$$
+
 
 -- sick animal alert for manager (row inserted by MySQL, not the Node API)
 CREATE TRIGGER `trg_animal_sick_alert`
