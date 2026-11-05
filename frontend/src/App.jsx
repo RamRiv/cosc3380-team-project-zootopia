@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard.jsx'
 import ComingSoon from './pages/ComingSoon.jsx'
 import Signup from './pages/Signup.jsx'
 import Checkout from './pages/Checkout.jsx'
+import Shop from './pages/Shop.jsx'
 import './App.css'
 import Animals from './pages/Animals.jsx'
 import {
@@ -42,6 +43,7 @@ function App() {
         <Route path="/enclosures" element={<CustomerEnclosures />} />
         <Route path="/attractions" element={<CustomerAttractions />} />
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/shop" element={<Shop />} />
         <Route path="/my-transactions" element={<MyTransactions />} />
         <Route path="/my-transactions/:id" element={<MyTransactions />} />
       </Route>

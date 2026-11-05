@@ -64,8 +64,8 @@ function NewSale() {
       setMessage('Pick a customer')
       return
     }
-    if (ticketLines.length === 0) {
-      setMessage('Add at least one ticket')
+    if (ticketLines.length === 0 && selectedProducts.length === 0) {
+      setMessage('Add at least one ticket or product')
       return
     }
 
@@ -81,7 +81,8 @@ function NewSale() {
             productId: p.productId,
             quantity: p.quantity,
           })),
-          enclosureIds: selectedEnclosures,
+          // visits need a ticket, so a product-only sale sends none
+          enclosureIds: ticketLines.length > 0 ? selectedEnclosures : [],
         }),
       })
       const data = await response.json()

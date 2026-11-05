@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { isPublicEnclosure } from '../zooInfo.js'
+import { isPublicEnclosure, isAnimalUnavailable, UNAVAILABLE_MESSAGE } from '../zooInfo.js'
 
 const ANIMAL_PHOTOS = {
   Lion: '/images/lion.jpg',
@@ -42,9 +42,11 @@ function CustomerEnclosures() {
     load()
   }, [])
 
+  // sick/quarantined animals get their own panel instead of a habitat card
+  const away = animals.filter(isAnimalUnavailable)
+
   function animalsInEnclosure(enclosureName) {
-    // guests only see healthy animals on exhibit (sick are quarantined)
-    return animals.filter((a) => a.Enclosure === enclosureName && !a.IsSick)
+    return animals.filter((a) => a.Enclosure === enclosureName && !isAnimalUnavailable(a))
   }
 
   return (
@@ -55,6 +57,18 @@ function CustomerEnclosures() {
       {error ? <p className="error">{error}</p> : null}
 
       {!error && enclosures.length === 0 ? <p>No enclosures to show.</p> : null}
+
+      {away.length > 0 && (
+        <div className="page-card" style={{ borderLeft: '4px solid #b45309', marginBottom: 16 }}>
+          <h3 style={{ marginTop: 0 }}>Not on display today</h3>
+          <p>{UNAVAILABLE_MESSAGE}</p>
+          <ul>
+            {away.map((a) => (
+              <li key={a.AnimalID}>{a.AnimalName} ({a.Species})</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="report-grid">
         {enclosures.filter(isPublicEnclosure).map((enc) => {

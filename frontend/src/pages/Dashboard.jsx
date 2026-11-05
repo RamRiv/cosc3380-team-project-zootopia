@@ -79,6 +79,17 @@ function Dashboard() {
     loadAlerts()
   }
 
+  async function deleteAlert(alertId) {
+    await fetch('/api/alerts/' + alertId, { method: 'DELETE' })
+    loadAlerts()
+  }
+
+  async function clearReadAlerts() {
+    if (!window.confirm('Delete all read alerts? This cannot be undone.')) return
+    await fetch('/api/alerts/clear-read', { method: 'DELETE' })
+    loadAlerts()
+  }
+
   return (
     <main className="dashboard">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
@@ -98,7 +109,12 @@ function Dashboard() {
               <div className="alert-panel">
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                   <strong>Alerts</strong>
-                  <button type="button" className="secondary" onClick={markAllRead}>Mark all read</button>
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button type="button" className="secondary" onClick={markAllRead}>Mark all read</button>
+                    {alerts.some((a) => a.IsRead) ? (
+                      <button type="button" className="secondary" onClick={clearReadAlerts}>Clear read</button>
+                    ) : null}
+                  </div>
                 </div>
                 {alerts.length === 0 ? (
                   <p>No alerts.</p>
@@ -120,7 +136,11 @@ function Dashboard() {
                         <button type="button" className="secondary" onClick={() => markRead(a.AlertID)}>
                           Mark read
                         </button>
-                      ) : null}
+                      ) : (
+                        <button type="button" className="secondary" onClick={() => deleteAlert(a.AlertID)}>
+                          Delete
+                        </button>
+                      )}
                     </div>
                   ))
                 )}

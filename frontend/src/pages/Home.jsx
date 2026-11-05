@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import './Home.css'
-import { TICKETS } from '../zooInfo.js'
+import { TICKETS, isAnimalUnavailable, UNAVAILABLE_MESSAGE } from '../zooInfo.js'
 
 const HOURS = [
   { days: 'Monday – Friday', time: '9am – 5pm' },
@@ -24,8 +24,11 @@ function Home() {
       try {
         const response = await fetch('/api/animals')
         const data = await response.json()
-        // public page: healthy animals on exhibit only (sick are in quarantine)
-        if (response.ok) setAnimals(data.filter((a) => !a.IsSick))
+        // show every animal; sick/quarantined ones go last and are greyed out
+        if (response.ok) {
+          data.sort((a, b) => isAnimalUnavailable(a) - isAnimalUnavailable(b))
+          setAnimals(data)
+        }
       } catch (err) {
         // leave empty if backend is down
       }
@@ -95,20 +98,25 @@ function Home() {
             <p>No animals to show right now.</p>
           ) : (
             <div className="animal-grid">
-              {animals.map((a) => (
-                <article key={a.AnimalID} className="animal-card">
-                  <img
-                    src={ANIMAL_PHOTOS[a.Species] || '/images/hero-zoo.jpg'}
-                    alt={a.AnimalName}
-                    className="animal-photo"
-                  />
-                  <div className="animal-meta">
-                    <strong>{a.AnimalName}</strong>
-                    <span>{a.Species}</span>
-                    <em>{a.Enclosure}</em>
-                  </div>
-                </article>
-              ))}
+              {animals.map((a) => {
+                const away = isAnimalUnavailable(a)
+                return (
+                  <article key={a.AnimalID} className={'animal-card' + (away ? ' unavailable' : '')}>
+                    <img
+                      src={ANIMAL_PHOTOS[a.Species] || '/images/hero-zoo.jpg'}
+                      alt={a.AnimalName}
+                      className="animal-photo"
+                    />
+                    {away ? <span className="animal-badge">Not on display</span> : null}
+                    <div className="animal-meta">
+                      <strong>{a.AnimalName}</strong>
+                      <span>{a.Species}</span>
+                      {/* never show the quarantine location to the public */}
+                      {away ? <em>{UNAVAILABLE_MESSAGE}</em> : <em>{a.Enclosure}</em>}
+                    </div>
+                  </article>
+                )
+              })}
             </div>
           )}
         </section>
