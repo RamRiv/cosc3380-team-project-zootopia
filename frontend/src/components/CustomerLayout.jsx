@@ -1,5 +1,6 @@
 import { NavLink, Outlet, useNavigate, Navigate } from 'react-router'
 import { getLoggedInCustomer, logoutCustomer } from '../customerAuth.js'
+import PawLogo from './PawLogo.jsx'
 
 // frame for customer pages: top bar + sidebar
 function CustomerLayout() {
@@ -18,7 +19,7 @@ function CustomerLayout() {
   return (
     <div className="layout">
       <header className="topbar">
-        <span className="logo">Zoo Customer</span>
+        <span className="logo"><PawLogo size={30} />Zoo Customer</span>
         <div className="user">
           <span>{customer.username}</span>
           <button onClick={handleLogout}>Logout</button>

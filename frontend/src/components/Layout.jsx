@@ -1,4 +1,5 @@
 import { NavLink, Outlet, useNavigate, Navigate } from 'react-router'
+import PawLogo from './PawLogo.jsx'
 
 function Layout() {
   const navigate = useNavigate()
@@ -30,7 +31,7 @@ function Layout() {
   return (
     <div className="layout">
       <header className="topbar">
-        <span className="logo">{headerLabel}</span>
+        <span className="logo"><PawLogo size={30} />{headerLabel}</span>
         <div className="user">
           <span>{user.username} ({user.role})</span>
           <button onClick={handleLogout}>Logout</button>

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
+import PawLogo from '../components/PawLogo.jsx'
 import { loginCustomer } from '../customerAuth.js'
 
 // customer sign up. creates the account on the backend (/api/signup)
@@ -59,6 +60,7 @@ function Signup() {
   return (
     <div className="login-page">
       <form className="login-box" onSubmit={handleSubmit}>
+        <PawLogo size={56} />
         <h2>Create an Account</h2>
 
         <label>Username</label>

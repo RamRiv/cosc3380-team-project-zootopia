@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
+import PawLogo from '../components/PawLogo.jsx'
 
 function Login() {
   const [username, setUsername] = useState('')
@@ -49,6 +50,7 @@ function Login() {
   return (
     <div className="login-page">
       <form className="login-box" onSubmit={handleSubmit}>
+        <PawLogo size={56} />
         <h2>Staff Login</h2>
 
         <label>Username</label>

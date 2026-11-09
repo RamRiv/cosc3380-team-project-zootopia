@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import './Home.css'
 import { TICKETS, isAnimalUnavailable, UNAVAILABLE_MESSAGE } from '../zooInfo.js'
+import PawLogo from '../components/PawLogo.jsx'
 
 const HOURS = [
   { days: 'Monday – Friday', time: '9am – 5pm' },
@@ -38,7 +39,7 @@ function Home() {
   return (
     <div className="home-shell">
       <header className="home-header">
-        <span className="home-logo">Zootopia Zoo</span>
+        <span className="home-logo"><PawLogo size={36} />Zootopia Zoo</span>
         <nav>
           <a href="#hours">Hours</a>
           <a href="#tickets">Tickets</a>
@@ -121,7 +122,7 @@ function Home() {
       </main>
 
       <footer className="home-footer">
-        <p>© 2026 Zootopia Zoo</p>
+        <p><PawLogo size={22} />© 2026 Zootopia Zoo</p>
         <Link className="staff-link" to="/login">Staff login</Link>
       </footer>
     </div>
