@@ -79,6 +79,12 @@ function Animals() {
       return
     }
 
+    // dates are YYYY-MM-DD strings, so comparing them as text works
+    if (form.DateOfBirth && form.AcquisitionDate < form.DateOfBirth) {
+      setMessage({ type: 'error', text: 'Arrival date cannot be before date of birth' })
+      return
+    }
+
     const picked = enclosures.find((e) => String(e.EnclosureID) === String(form.EnclosureID))
     if (!form.IsSick && picked && picked.Name === 'Quarantine Ward') {
       setMessage({
@@ -208,7 +214,13 @@ function Animals() {
         <input type="date" name="DateOfBirth" value={form.DateOfBirth} onChange={handleChange} />
 
         <label>Arrival date</label>
-        <input type="date" name="AcquisitionDate" value={form.AcquisitionDate} onChange={handleChange} />
+        <input
+          type="date"
+          name="AcquisitionDate"
+          value={form.AcquisitionDate}
+          onChange={handleChange}
+          min={form.DateOfBirth || undefined}
+        />
 
         <label>Sick (→ quarantine)</label>
         <input type="checkbox" name="IsSick" checked={form.IsSick} onChange={handleChange} />

@@ -143,6 +143,9 @@ async function handleAnimals(req, res, pathname) {
       if (!Name || !SpeciesID || !EnclosureID || !Sex || !AcquisitionDate) {
         return sendJson(res, 400, { error: "Missing required fields" });
       }
+      if (DateOfBirth && AcquisitionDate < DateOfBirth) {
+        return sendJson(res, 400, { error: "Arrival date cannot be before date of birth" });
+      }
       const [result] = await pool.query(
         `INSERT INTO animal (Name, SpeciesID, EnclosureID, Sex, DateOfBirth, AcquisitionDate, IsSick)
          VALUES (?, ?, ?, ?, ?, ?, ?)`,
@@ -168,6 +171,9 @@ async function handleAnimals(req, res, pathname) {
     try {
       const body = await readBody(req);
       const { Name, SpeciesID, EnclosureID, Sex, DateOfBirth, AcquisitionDate, IsSick } = body;
+      if (DateOfBirth && AcquisitionDate < DateOfBirth) {
+        return sendJson(res, 400, { error: "Arrival date cannot be before date of birth" });
+      }
       const [result] = await pool.query(
         `UPDATE animal
          SET Name = ?, SpeciesID = ?, EnclosureID = ?, Sex = ?,
