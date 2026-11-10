@@ -42,7 +42,8 @@ CREATE TABLE `animal` (
   CONSTRAINT `animal_ibfk_1` FOREIGN KEY (`SpeciesID`) REFERENCES `species` (`SpeciesID`),
   CONSTRAINT `animal_ibfk_2` FOREIGN KEY (`EnclosureID`) REFERENCES `enclosure` (`EnclosureID`),
   CONSTRAINT `animal_chk_sick` CHECK ((`IsSick` IN (0,1))),
-  CONSTRAINT `animal_chk_deleted` CHECK ((`IsDeleted` IN (0,1)))
+  CONSTRAINT `animal_chk_deleted` CHECK ((`IsDeleted` IN (0,1))),
+  CONSTRAINT `animal_chk_arrival` CHECK ((`DateOfBirth` IS NULL OR `AcquisitionDate` >= `DateOfBirth`))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
